@@ -91,10 +91,18 @@ WSGI_APPLICATION = 'cliving.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+NAME = get_secret("NAME")
+USER = get_secret("USER")
+PASSWORD = get_secret("PASSWORD")
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': NAME,
+        'USER': USER,
+        'PASSWORD': PASSWORD,
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
 
