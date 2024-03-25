@@ -15,8 +15,35 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path, include
+from rest_framework.permissions import AllowAny
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+app_name = 'cliving'
+
+schema_url_v1_patterns = [
+    re_path(r'^v1/', include('cliving.urls', namespace='cliving')),
+]
+
+schema_view_v1 = get_schema_view(
+    openapi.Info(
+        title="CLIVING Open API",
+        default_version='v1',
+        description="안녕하세요. CLIVING Open API 문서 페이지 입니다.",
+        terms_of_service="https://www.google.com/policies/terms/",
+    ),
+    validators=['flex'],
+    public=True,
+    permission_classes=(AllowAny,),
+    patterns=schema_url_v1_patterns,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Auto DRF API docs
+    re_path(r'^swagger(?P<format>\.json|\.yaml)/v1$', schema_view_v1.without_ui(cache_timeout=0), name='schema-json'),
+    re_path(r'^swagger/v1/$', schema_view_v1.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    re_path(r'^redoc/v1/$', schema_view_v1.with_ui('redoc', cache_timeout=0), name='schema-redoc-v1'),
 ]
