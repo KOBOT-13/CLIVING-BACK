@@ -20,6 +20,7 @@ from rest_framework.permissions import AllowAny
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+
 app_name = 'cliving'
 
 schema_url_v1_patterns = [
@@ -41,6 +42,11 @@ schema_view_v1 = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('page.urls')),
+    # path('clip/', include('clip.urls')),
+    # path('Frame/', include('Frame.urls')),
+    # path('Hold/', include('Hold.urls')),
+
 
     # Auto DRF API docs
     re_path(r'^swagger(?P<format>\.json|\.yaml)/v1$', schema_view_v1.without_ui(cache_timeout=0), name='schema-json'),
