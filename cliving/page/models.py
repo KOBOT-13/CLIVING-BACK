@@ -34,7 +34,7 @@ class Clip(models.Model):
     succes_check = models.BooleanField(default=False, verbose_name="check")
 
 class Frame(models.Model):
-    image = models.ImageField()
+    image = models.ImageField(upload_to='Frame/')
 
 class Hold(models.Model):
     color = ArrayField(models.IntegerField(choices=COLOR_CHOICES))
