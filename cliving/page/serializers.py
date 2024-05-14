@@ -12,7 +12,7 @@ class ClipSerializer(serializers.ModelSerializer):
 class FrameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Frame
-        fields = '__all__'
+        fields = ['image']
 class HoldSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hold
