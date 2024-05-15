@@ -26,12 +26,21 @@ class Page(models.Model):
     start_time = models.TimeField(blank=True, null=True, verbose_name="start")
     end_time = models.TimeField(blank=True, null=True, verbose_name="end")
 
-class Clip(models.Model):
-    page_id = models.ForeignKey(Page, related_name="page", on_delete=models.CASCADE)
-    checkpoint1 = models.TimeField(blank=True, null=True, verbose_name="cp1")
-    checkpoint2 = models.TimeField(blank=True, null=True, verbose_name="cp2")
-    totaltime = models.TimeField(blank=True, null=True, verbose_name="tt")
-    succes_check = models.BooleanField(default=False, verbose_name="check")
+class Video(models.Model):
+    # page_id = models.ForeignKey(Page, related_name="page", on_delete=models.CASCADE)
+    videofile = models.FileField(upload_to='videofiles/')
+    date_created = models.DateTimeField(auto_now_add=True)  #레코드 처음 생성될 때 자동으로 현재 시간 저장.
+
+class Checkpoint(models.Model):
+    TYPE_CHOICES = [
+        (0, 'start'),
+        (1, 'success'),
+        (2, 'fail'),
+    ]
+    video = models.ForeignKey(Video, related_name='checkpoints', on_delete=models.CASCADE)
+    checkpoint_time = models.TimeField()
+    checkpoint_type = models.IntegerField(choices=TYPE_CHOICES)
+    parent_checkpoint = models.ForeignKey('self', on_delete = models.CASCADE, null=True, blank=True, related_name='related_checkpoint')
 
 class Frame(models.Model):
     image = models.ImageField(upload_to='Frame/')
