@@ -6,7 +6,7 @@ router = DefaultRouter()
 router.register('page', PageViewSet)
 router.register('video', VideoViewSet)
 router.register('checkpoint', CheckpointViewSet)
-router.register('Frame', FrameViewSet)
+router.register('frame', FrameViewSet)
 router.register('hold', HoldViewSet)
 
 urlpatterns = [

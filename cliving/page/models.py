@@ -2,19 +2,18 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 COLOR_CHOICES = {
-    0: "black",
-    1: "blue",
-    2: "brown",
-    3: "climber",
-    4: "cream",
-    5: "going down",
-    6: "green",
-    7: "orange",
-    8: "pink",
-    9: "purple",
-    10: "red",
+    0: "orange",
+    1: "yellow",
+    2: "green",
+    3: "blue",
+    4: "navy",
+    5: "red",
+    6: "pink",
+    7: "purple",
+    8: "grey",
+    9: "brown",
+    10: "black",
     11: "white",
-    12: "yellow",
 }
 
 # Create your models here.
@@ -38,8 +37,8 @@ class Checkpoint(models.Model):
         (2, 'fail'),
     ]
     video = models.ForeignKey(Video, related_name='checkpoints', on_delete=models.CASCADE)
-    checkpoint_time = models.TimeField()
-    checkpoint_type = models.IntegerField(choices=TYPE_CHOICES)
+    time = models.TimeField()
+    type = models.IntegerField(choices=TYPE_CHOICES)
     parent_checkpoint = models.ForeignKey('self', on_delete = models.CASCADE, null=True, blank=True, related_name='related_checkpoint')
 
 class Frame(models.Model):
