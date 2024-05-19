@@ -2,19 +2,18 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 COLOR_CHOICES = {
-    0: "black",
-    1: "blue",
-    2: "brown",
-    3: "climber",
-    4: "cream",
-    5: "going down",
-    6: "green",
-    7: "orange",
-    8: "pink",
-    9: "purple",
-    10: "red",
+    0: "orange",
+    1: "yellow",
+    2: "green",
+    3: "blue",
+    4: "navy",
+    5: "red",
+    6: "pink",
+    7: "purple",
+    8: "grey",
+    9: "brown",
+    10: "black",
     11: "white",
-    12: "yellow",
 }
 
 # Create your models here.
@@ -26,12 +25,21 @@ class Page(models.Model):
     start_time = models.TimeField(blank=True, null=True, verbose_name="start")
     end_time = models.TimeField(blank=True, null=True, verbose_name="end")
 
-class Clip(models.Model):
-    page_id = models.ForeignKey(Page, related_name="page", on_delete=models.CASCADE)
-    checkpoint1 = models.TimeField(blank=True, null=True, verbose_name="cp1")
-    checkpoint2 = models.TimeField(blank=True, null=True, verbose_name="cp2")
-    totaltime = models.TimeField(blank=True, null=True, verbose_name="tt")
-    succes_check = models.BooleanField(default=False, verbose_name="check")
+class Video(models.Model):
+    # page_id = models.ForeignKey(Page, related_name="page", on_delete=models.CASCADE)
+    videofile = models.FileField(upload_to='videofiles/')
+    date_created = models.DateTimeField(auto_now_add=True)  #레코드 처음 생성될 때 자동으로 현재 시간 저장.
+
+class Checkpoint(models.Model):
+    TYPE_CHOICES = [
+        (0, 'start'),
+        (1, 'success'),
+        (2, 'fail'),
+    ]
+    video = models.ForeignKey(Video, related_name='checkpoints', on_delete=models.CASCADE)
+    time = models.TimeField()
+    type = models.IntegerField(choices=TYPE_CHOICES)
+    parent_checkpoint = models.ForeignKey('self', on_delete = models.CASCADE, null=True, blank=True, related_name='related_checkpoint')
 
 class Frame(models.Model):
     image = models.ImageField(upload_to='Frame/')
