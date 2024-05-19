@@ -106,6 +106,9 @@ DATABASES = {
         'PASSWORD': PASSWORD,
         'HOST': 'localhost',
         'PORT': '',
+        'OPTIONS': {
+            'options': '-c client_encoding=UTF8'
+        }
     }
 }
 
