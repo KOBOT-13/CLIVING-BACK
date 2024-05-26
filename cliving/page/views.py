@@ -1,11 +1,14 @@
 from django.shortcuts import render
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Page, Video, Checkpoint, Frame, Hold
-from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer
+from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
+from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, FirstImageSerializer
 from rest_framework import viewsets
 from .video_utils import generate_clip
 import os
+from django.http import JsonResponse
+from django.core.files.storage import default_storage
+from .hold_utils import perform_object_detection
 
 def time_to_seconds(time_obj):
     return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
@@ -56,4 +59,18 @@ class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
 
-
+class Yolov8ViewSet(viewsets.ModelViewSet):
+    queryset = FirstImage.objects.all()
+    serializer_class = FirstImageSerializer
+    
+    @action(detail = True, methods = ['post'])
+    def detect_image(self, request):
+        image_file = self.get_object()
+        image_path = default_storage.save(image_file.name, image_file)
+        image_path = os.path.join(default_storage.location, image_path)
+        
+        detected_objects = perform_object_detection(image_path)
+        
+        default_storage.delete(image_path)
+        
+        return JsonResponse({'status': 'bboxes created', 'bboxes': detected_objects})
