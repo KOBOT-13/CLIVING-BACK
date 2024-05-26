@@ -21,6 +21,7 @@ admin.site.register(Video, VideoAdmin)
 admin.site.register(Checkpoint)
 admin.site.register(Hold)
 admin.site.register(Frame)
+admin.site.register(FirstImage)
 
 
 
