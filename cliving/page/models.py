@@ -102,3 +102,7 @@ class Hold(models.Model):
     y1 = models.FloatField()
     y2 = models.FloatField()
     frame_id = models.ForeignKey(Frame, related_name="frame", on_delete=models.CASCADE)
+    
+class FirstImage(models.Model):
+    image = models.ImageField(upload_to='images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
