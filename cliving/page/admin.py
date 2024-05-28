@@ -11,8 +11,9 @@ from .models import *
         return ', '.join(video_clips)
     show_clips.short_description = 'Clips'"""
 class VideoAdmin(admin.ModelAdmin):
-    list_display = ['page_id', 'videofile', 'end_time', 'start_time', 'duration']
-    fields = ['page_id', 'videofile', 'end_time', 'start_time', 'duration']
+    list_display = ['page_id', 'custom_id', 'videofile', 'end_time', 'start_time', 'duration']
+    fields = ['page_id', 'custom_id', 'videofile', 'end_time', 'start_time', 'duration']
+    readonly_fields = ['custom_id']
 
 
 # Register your models here.

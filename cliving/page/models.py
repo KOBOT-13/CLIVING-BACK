@@ -40,12 +40,20 @@ def seconds_to_time(seconds):
 # Create your models here.
 
 class Page(models.Model):
-    date = models.DateField(auto_now_add=True, primary_key=True)
+    date = models.CharField(max_length=6, primary_key=True, editable=False)
     climbing_center_name = models.CharField(max_length=20, verbose_name="center_name")
     bouldering_clear_color = ArrayField(models.CharField(max_length=10, choices=COLOR_CHOICES),null=True, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
-    start_time = models.TimeField(blank=True, null=True, verbose_name="start")  #암장에서 첫번째 영상을 시작한 시간
-    end_time = models.TimeField(blank=True, null=True, verbose_name="end")  #암장에서 마지막 영상을 끝낸 시간(암장에서 있던 시간을 기록)
+    today_start_time = models.TimeField(blank=True, null=True, verbose_name="start")  #암장에서 첫번째 영상을 시작한 시간
+    today_end_time = models.TimeField(blank=True, null=True, verbose_name="end")  #암장에서 마지막 영상을 끝낸 시간(암장에서 있던 시간을 기록)
     play_time = models.IntegerField(help_text="climbing total play time in seconds", null=True, blank=True)  #영상 촬영 시간
+
+    def save(self, *args, **kwargs):
+        if not self.date:
+            self.date = datetime.now().strftime('%y%m%d')  # YYMMDD 형식으로 저장
+        super(Page, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.date
 
 
 class Video(models.Model):
