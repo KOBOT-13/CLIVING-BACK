@@ -133,13 +133,13 @@ class Frame(models.Model):
     image = models.ImageField(upload_to='Frame/')
 
 class Hold(models.Model):
-    color = ArrayField(models.IntegerField(choices=COLOR_CHOICES))
-    is_top = models.BooleanField(default=False, verbose_name="top")
+    first_image = models.ForeignKey('FirstImage', on_delete=models.CASCADE)
     x1 = models.FloatField()
     x2 = models.FloatField()
     y1 = models.FloatField()
     y2 = models.FloatField()
-    frame_id = models.ForeignKey(Frame, related_name="frame", on_delete=models.CASCADE)
+    frame = models.ForeignKey(Frame, related_name="holds", on_delete=models.CASCADE)
+    index_number = models.PositiveIntegerField()
     
 
 """
@@ -147,13 +147,34 @@ class FirstImage(models.Model):
     image_id = models.IntegerField()
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        image_path = self.image.path
+        detections = perform_object_detection(self.image.path)
+        
+        frame_instance = Frame.objects.create(image=self.image)
+        
+        for index, detection in enumerate(detections, start=1):
+            box = detection['box']
+            Hold.objects.create(
+                first_image=self,
+                x1=box[0][0],
+                y1=box[0][1],
+                x2=box[0][2],
+                y2=box[0][3],
+                frame=frame_instance,
+                index_number=index
+            )
 
-        detections = perform_object_detection(image_path)
 
-        save_detection_results(self.id, detections)
-"""
+class Hold(models.Model):
+    is_top = models.BooleanField(default=False, verbose_name="top")
+    first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
+    x1 = models.FloatField()
+    x2 = models.FloatField()
+    y1 = models.FloatField()
+    y2 = models.FloatField()
+    frame = models.ForeignKey(Frame, related_name="holds", on_delete=models.CASCADE)
+    index_number = models.PositiveIntegerField()
+
