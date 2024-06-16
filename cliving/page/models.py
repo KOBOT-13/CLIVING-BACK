@@ -141,6 +141,8 @@ class Hold(models.Model):
     y2 = models.FloatField()
     frame_id = models.ForeignKey(Frame, related_name="frame", on_delete=models.CASCADE)
     
+
+"""
 class FirstImage(models.Model):
     image_id = models.IntegerField()
     image = models.ImageField(upload_to='images/')
@@ -154,3 +156,4 @@ class FirstImage(models.Model):
         detections = perform_object_detection(image_path)
 
         save_detection_results(self.id, detections)
+"""
