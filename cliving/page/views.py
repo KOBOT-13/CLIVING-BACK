@@ -5,11 +5,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
 from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
-from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, FirstImageSerializer
+from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, \
+    FirstImageSerializer, ColorTriesSerializer
 from rest_framework import viewsets, status
 
 from .video_utils import generate_clip
-from django.db.models import Sum
+from django.db.models import Sum, Count, F
 import os
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
@@ -46,6 +47,28 @@ class AnnualClimbingTimeView(APIView):  # 올해 년간 클라이밍 시간 get
         current_year = timezone.now().strftime('%y')
         total_time = Page.objects.filter(date__startswith=current_year).aggregate(total_time=Sum('play_time'))
         return Response({'annual_total_time': total_time['total_time']}, status=status.HTTP_200_OK)
+    
+class MonthlyColorTriesView(APIView):
+    def get(self, request):
+        current_month = timezone.now().strftime('%y%m')
+        monthly_pages = Page.objects.filter(date__startswith=current_month)
+
+        color_counter = Counter()
+        for page in monthly_pages:
+            color_counter.update(page.bouldering_clear_color)
+
+        return Response({'color_tries': dict(color_counter)})
+
+class AnnualColorTriesView(APIView):
+    def get(self, request):
+        current_year = timezone.now().strftime('%y')
+        yearly_pages = Page.objects.filter(date__startswith=current_year)
+
+        color_counter = Counter()
+        for page in yearly_pages:
+            color_counter.update(page.bouldering_clear_color)
+
+        return Response({'color_tries': dict(color_counter)})
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
