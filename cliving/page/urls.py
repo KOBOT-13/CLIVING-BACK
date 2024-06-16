@@ -2,7 +2,6 @@ from django.urls import path, include
 
 from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, Yolov8ViewSet, \
     SpecificMonthClimbingTimeView, MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, \
-
     AnnualColorTriesView, ImageUploadView
 
 
