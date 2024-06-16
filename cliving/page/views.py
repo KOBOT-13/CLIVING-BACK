@@ -41,6 +41,7 @@ class SpecificMonthClimbingTimeView(APIView): # 특정 달 클라이밍 시간 g
         # 플레이 시간이 없는 경우 0으로 반환
         total_time = total_time['total_time'] if total_time['total_time'] is not None else 0
 
+
         # 시리얼라이저를 사용하여 데이터 포맷
         serializer = ClimbingTimeSerializer({
             'year': year,

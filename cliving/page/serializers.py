@@ -22,6 +22,13 @@ class ClimbingTimeSerializer(serializers.Serializer):
     year = serializers.CharField(max_length=4)  # 연도 정보
     month = serializers.CharField(max_length=2, required=False)  # 월 정보, 연간 뷰에서는 필요 없음
     total_climbing_time = serializers.IntegerField()  # 총 시간
+    total_climbing_time_hhmm = serializers.SerializerMethodField()  # 총 시간을 hh:mm 형식으로 반환
+
+    def get_total_climbing_time_hhmm(self, obj):
+        total_seconds = obj.get('total_climbing_time', 0)
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, _ = divmod(remainder, 60)
+        return f"{int(hours):02}:{int(minutes):02}"
 
 class ColorTriesSerializer(serializers.Serializer):
     color = serializers.CharField()
