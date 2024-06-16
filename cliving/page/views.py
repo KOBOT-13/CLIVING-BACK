@@ -1,3 +1,5 @@
+from collections import Counter
+
 from django.shortcuts import render
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -15,6 +17,7 @@ import os
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from .hold_utils import perform_object_detection, save_detection_results
+
 
 
 def time_to_seconds(time_obj):
@@ -47,7 +50,7 @@ class AnnualClimbingTimeView(APIView):  # 올해 년간 클라이밍 시간 get
         current_year = timezone.now().strftime('%y')
         total_time = Page.objects.filter(date__startswith=current_year).aggregate(total_time=Sum('play_time'))
         return Response({'annual_total_time': total_time['total_time']}, status=status.HTTP_200_OK)
-    
+
 class MonthlyColorTriesView(APIView):
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
