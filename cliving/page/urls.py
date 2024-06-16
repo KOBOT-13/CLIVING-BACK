@@ -5,6 +5,9 @@ from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, H
     AnnualColorTriesView, ImageUploadView
 
 
+from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, SpecificMonthClimbingTimeView, \
+    MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, AnnualColorTriesView #, Yolov8ViewSet, ImageUploadView
+
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -13,7 +16,7 @@ router.register('video', VideoViewSet)
 router.register('checkpoint', CheckpointViewSet)
 router.register('frame', FrameViewSet)
 router.register('hold', HoldViewSet)
-router.register('yolov8', Yolov8ViewSet)
+# router.register('yolov8', Yolov8ViewSet)
 
 urlpatterns = [
     path('v1/', include([

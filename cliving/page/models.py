@@ -141,7 +141,10 @@ class Hold(models.Model):
     frame = models.ForeignKey(Frame, related_name="holds", on_delete=models.CASCADE)
     index_number = models.PositiveIntegerField()
     
+
+"""
 class FirstImage(models.Model):
+    image_id = models.IntegerField()
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -164,6 +167,7 @@ class FirstImage(models.Model):
                 index_number=index
             )
 
+
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
@@ -173,3 +177,4 @@ class Hold(models.Model):
     y2 = models.FloatField()
     frame = models.ForeignKey(Frame, related_name="holds", on_delete=models.CASCADE)
     index_number = models.PositiveIntegerField()
+
