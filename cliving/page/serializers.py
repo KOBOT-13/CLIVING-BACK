@@ -17,6 +17,10 @@ class VideoSerializer(serializers.ModelSerializer):
         video_clips = [f"{output_dir}/{clip}" for clip in os.listdir(output_dir) if clip.startswith(f"{obj.id}_")]
         return video_clips
 
+class ColorTriesSerializer(serializers.Serializer):
+    color = serializers.CharField()
+    tries = serializers.IntegerField()
+
 class CheckpointSerializer(serializers.ModelSerializer):
     class Meta:
         model = Checkpoint
