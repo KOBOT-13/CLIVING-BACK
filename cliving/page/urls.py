@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, Yolov8ViewSet
+from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, Yolov8ViewSet, ImageUploadView
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -13,5 +13,6 @@ router.register('yolov8', Yolov8ViewSet)
 urlpatterns = [
     path('v1/', include([
         path('', include(router.urls)),
+        path('upload/', ImageUploadView.as_view(), name='image-upload'),
     ])),
 ]

@@ -1,14 +1,15 @@
 from django.shortcuts import render
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
 from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, FirstImageSerializer
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from .video_utils import generate_clip
 import os
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
-from .hold_utils import perform_object_detection
+from .hold_utils import perform_object_detection, save_detection_results
 
 def time_to_seconds(time_obj):
     return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
@@ -74,3 +75,17 @@ class Yolov8ViewSet(viewsets.ModelViewSet):
         default_storage.delete(image_path)
 
         return JsonResponse({'status': 'bboxes created', 'bboxes': detected_objects})
+    
+class ImageUploadView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = FirstImageSerializer(data=request.data)
+        if serializer.is_valid():
+            image = serializer.save()
+            image_path = image.image.path
+
+            detections = perform_object_detection(image_path)
+
+            save_detection_results(image.id, detections)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

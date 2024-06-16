@@ -5,6 +5,7 @@ from datetime import *
 from django.core.files.storage import default_storage
 from django.utils import timezone
 import os
+from .hold_utils import perform_object_detection, save_detection_results
 
 COLOR_CHOICES = [
     ('orange', 'orange'),
@@ -106,3 +107,15 @@ class Hold(models.Model):
 class FirstImage(models.Model):
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        # 이미지가 저장된 경로
+        image_path = self.image.path
+
+        # 객체 탐지 수행
+        detections = perform_object_detection(image_path)
+
+        # 탐지 결과를 저장
+        save_detection_results(self.id, detections)
