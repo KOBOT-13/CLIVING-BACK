@@ -132,18 +132,8 @@ class Checkpoint(models.Model):
 class Frame(models.Model):
     image = models.ImageField(upload_to='Frame/')
 
-class Hold(models.Model):
-    first_image = models.ForeignKey('FirstImage', on_delete=models.CASCADE)
-    x1 = models.FloatField()
-    x2 = models.FloatField()
-    y1 = models.FloatField()
-    y2 = models.FloatField()
-    frame = models.ForeignKey(Frame, related_name="holds", on_delete=models.CASCADE)
-    index_number = models.PositiveIntegerField()
     
-
 class FirstImage(models.Model):
-    image_id = models.IntegerField()
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -154,7 +144,7 @@ class FirstImage(models.Model):
         
         frame_instance = Frame.objects.create(image=self.image)
         
-        for index, detection in enumerate(detections, start=1):
+        for index, detection in enumerate(detections, start=1): 
             box = detection['box']
             Hold.objects.create(
                 first_image=self,
@@ -166,14 +156,12 @@ class FirstImage(models.Model):
                 index_number=index
             )
 
-
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
     x1 = models.FloatField()
     x2 = models.FloatField()
     y1 = models.FloatField()
-    y2 = models.FloatField()
+    y2 = models.FloatField()    
     frame = models.ForeignKey(Frame, related_name="holds", on_delete=models.CASCADE)
-    index_number = models.PositiveIntegerField()
-
+    index_number = models.PositiveIntegerField(default=0)

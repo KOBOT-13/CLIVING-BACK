@@ -6,10 +6,9 @@ from rest_framework.response import Response
 
 from rest_framework.views import APIView
 from django.utils import timezone
-from .models import Page, Video, Checkpoint, Frame, Hold
-#FirstImage
-from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, ColorTriesSerializer, ClimbingTimeSerializer
-#FirstImageSerializer
+from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
+from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer
+
 
 from rest_framework import viewsets, status
 
@@ -142,7 +141,7 @@ class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
     
-"""class Yolov8ViewSet(viewsets.ModelViewSet):
+class Yolov8ViewSet(viewsets.ModelViewSet):
     queryset = FirstImage.objects.all()
     serializer_class = FirstImageSerializer
 
@@ -171,5 +170,3 @@ class ImageUploadView(APIView):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-"""

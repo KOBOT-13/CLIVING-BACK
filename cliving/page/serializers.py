@@ -2,8 +2,7 @@ import os
 import json
 
 from rest_framework import serializers
-from .models import Page, Video, Checkpoint, Frame, Hold
-#FirstImage
+from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
 
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,7 +42,7 @@ class HoldSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 
-"""
+
 class FirstImageSerializer(serializers.ModelSerializer):
     bbox = serializers.SerializerMethodField()
     
@@ -61,4 +60,3 @@ class FirstImageSerializer(serializers.ModelSerializer):
             detected_bbox = []
 
         return detected_bbox
-"""
