@@ -5,8 +5,10 @@ from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, H
     AnnualColorTriesView, ImageUploadView
 
 
-from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, SpecificMonthClimbingTimeView, \
-    MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, AnnualColorTriesView #, Yolov8ViewSet, ImageUploadView
+from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, \
+    SpecificMonthClimbingTimeView, \
+    MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, AnnualColorTriesView, \
+    VideoFileView, AllPagesView  # , Yolov8ViewSet, ImageUploadView
 
 from rest_framework.routers import DefaultRouter
 
@@ -26,8 +28,10 @@ urlpatterns = [
         path('statistics/climbing-time/<int:year>/<int:month>/', SpecificMonthClimbingTimeView.as_view(), name='specific-month-climbing-time'),
         path('statistics/monthly/color-tries/', MonthlyColorTriesView.as_view(), name='monthly-color-tries'),
         path('statistics/annual/color-tries/', AnnualColorTriesView.as_view(), name='annual-color-tries'),
+        path('video/<str:custom_id>/file/', VideoFileView.as_view(), name='video-file'),
+        path('pages/<int:year>/<int:month>/', AllPagesView.as_view(), name='all-pages-list')
 
-        path('upload/', ImageUploadView.as_view(), name='image-upload'),
+        # path('upload/', ImageUploadView.as_view(), name='image-upload'),
 
     ])),
 ]

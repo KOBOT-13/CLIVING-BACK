@@ -1,18 +1,14 @@
 from collections import Counter
-
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from rest_framework.views import APIView
 from django.utils import timezone
 from .models import Page, Video, Checkpoint, Frame, Hold
 #FirstImage
 from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, ColorTriesSerializer, ClimbingTimeSerializer
 #FirstImageSerializer
-
 from rest_framework import viewsets, status
-
 from .video_utils import generate_clip
 from django.db.models import Sum, Count, F
 import os
@@ -29,6 +25,14 @@ def time_to_seconds(time_obj):
 class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
+
+class AllPagesView(APIView):
+    def get(self, request, year, month):
+        # 'date' 필드가 YYMMDD 형식이므로 year와 month를 기반으로 필터링
+        specific_month = f'{year}{month:02d}'
+        pages = Page.objects.filter(date__startswith=specific_month)
+        serializer = PageSerializer(pages, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SpecificMonthClimbingTimeView(APIView): # 특정 달 클라이밍 시간 get (1월 ~12월 반복 불러오기로 사용하면 될 듯 함)
@@ -129,6 +133,13 @@ class VideoViewSet(viewsets.ModelViewSet):
 
         return Response({'status': 'clips created', 'clips': created_clips})
 
+
+class VideoFileView(APIView):
+    def get(self, request, custom_id):
+        video = get_object_or_404(Video, custom_id=custom_id)
+        return Response({
+            'videofile': video.videofile.url
+        })
 
 class CheckpointViewSet(viewsets.ModelViewSet):
     queryset = Checkpoint.objects.all()
