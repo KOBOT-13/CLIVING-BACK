@@ -142,7 +142,6 @@ class Hold(models.Model):
     index_number = models.PositiveIntegerField()
     
 
-"""
 class FirstImage(models.Model):
     image_id = models.IntegerField()
     image = models.ImageField(upload_to='images/')
