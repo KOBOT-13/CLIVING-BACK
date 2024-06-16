@@ -1,15 +1,20 @@
 from django.shortcuts import render
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
 from rest_framework.views import APIView
+from django.utils import timezone
 from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
 from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, FirstImageSerializer
 from rest_framework import viewsets, status
+
 from .video_utils import generate_clip
+from django.db.models import Sum
 import os
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from .hold_utils import perform_object_detection, save_detection_results
+
 
 def time_to_seconds(time_obj):
     return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
@@ -19,10 +24,34 @@ class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
 
+
+class SpecificMonthClimbingTimeView(APIView):   # 특정 달 클라이밍 시간 get (1월 ~12월 반복 불러오기로 사용하면 될 듯 함)
+    def get(self, request, year, month):
+        # 입력 받은 연월을 YYMM 형태로 포맷팅
+        specific_month = f"{year}{month:02d}"
+        total_time = Page.objects.filter(date__startswith=specific_month).aggregate(total_time=Sum('play_time'))
+
+        # 플레이 시간이 없는 경우 0으로 반환
+        total_time = total_time['total_time'] if total_time['total_time'] is not None else 0
+        return Response({'year': year, 'month': month, 'total_climbing_time': total_time}, status=status.HTTP_200_OK)
+
+class MonthlyClimbingTimeView(APIView): # 이번달 월간 클라이밍 시간 get
+    def get(self, request):
+        current_month = timezone.now().strftime('%y%m')
+        total_time = Page.objects.filter(date__startswith=current_month).aggregate(total_time=Sum('play_time'))
+        return Response({'monthly_total_time': total_time['total_time']}, status=status.HTTP_200_OK)
+
+class AnnualClimbingTimeView(APIView):  # 올해 년간 클라이밍 시간 get
+    def get(self, request):
+        current_year = timezone.now().strftime('%y')
+        total_time = Page.objects.filter(date__startswith=current_year).aggregate(total_time=Sum('play_time'))
+        return Response({'annual_total_time': total_time['total_time']}, status=status.HTTP_200_OK)
+
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-
+    # 클립 생성 요청하는 방법 : http://127.0.0.1:8000/v1/video/<custom_id>/create_clip/ (POST or GET)
+    # 클립 확인하는 방법(디렉토리 위치로 -> 나중에 클립 확인 api 만들 예정임) : http://127.0.0.1:8000/media/clips/240526-01_7_15.mp4
     @action(detail = True, methods = ['post'])
     def create_clip(self, request, pk=None):
         video = self.get_object()
@@ -40,7 +69,7 @@ class VideoViewSet(viewsets.ModelViewSet):
                 output_dir = 'media/clips'
                 if not os.path.exists(output_dir):  #디렉토리 없으면 만들어줌.
                     os.makedirs(output_dir)
-                output_path = f'media/clips/{video.id}_{start_time}_{end_time}.mp4' #클립 파일명 설정부분.
+                output_path = f'media/clips/{video.custom_id}_{start_time}_{end_time}.mp4' #클립 파일명 설정부분.
                 generate_clip(video.videofile.path, start_time, end_time, output_path)
                 created_clips.append(output_path)
                 start_checkpoint = None
