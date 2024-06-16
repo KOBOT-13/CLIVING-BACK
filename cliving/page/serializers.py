@@ -1,7 +1,7 @@
 import os
 
 from rest_framework import serializers
-from .models import Page, Video, Checkpoint, Frame, Hold
+from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
 
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,3 +30,11 @@ class HoldSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hold
         fields = '__all__'
+        
+class FirstImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FirstImage
+        field = ['image']
+    def get_bbox(self, img):
+        output_dir = 'media/bbox'
+        detected_bbox = []
