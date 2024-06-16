@@ -4,10 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
-from .models import Page, Video, Checkpoint, Frame, Hold
-#FirstImage
-from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, ColorTriesSerializer, ClimbingTimeSerializer
-#FirstImageSerializer
+from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
+from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer
 from rest_framework import viewsets, status
 from .video_utils import generate_clip
 from django.db.models import Sum, Count, F
