@@ -142,7 +142,7 @@ class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
     
-"""class Yolov8ViewSet(viewsets.ModelViewSet):
+class Yolov8ViewSet(viewsets.ModelViewSet):
     queryset = FirstImage.objects.all()
     serializer_class = FirstImageSerializer
 
@@ -171,5 +171,3 @@ class ImageUploadView(APIView):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-"""
