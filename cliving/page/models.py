@@ -6,6 +6,7 @@ from moviepy.editor import VideoFileClip
 from datetime import *
 from django.core.files.storage import default_storage
 from django.utils import timezone
+from .hold_utils import perform_object_detection, save_detection_results
 import os
 
 COLOR_CHOICES = [
@@ -129,3 +130,12 @@ class Hold(models.Model):
 class FirstImage(models.Model):
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        image_path = self.image.path
+
+        detections = perform_object_detection(image_path)
+
+        save_detection_results(self.id, detections)

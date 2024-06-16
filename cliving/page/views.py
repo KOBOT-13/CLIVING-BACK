@@ -16,7 +16,8 @@ from django.db.models import Sum, Count, F
 import os
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
-from .hold_utils import perform_object_detection
+from .hold_utils import perform_object_detection, save_detection_results
+
 
 
 def time_to_seconds(time_obj):
@@ -129,3 +130,17 @@ class Yolov8ViewSet(viewsets.ModelViewSet):
         default_storage.delete(image_path)
 
         return JsonResponse({'status': 'bboxes created', 'bboxes': detected_objects})
+    
+class ImageUploadView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = FirstImageSerializer(data=request.data)
+        if serializer.is_valid():
+            image = serializer.save()
+            image_path = image.image.path
+
+            detections = perform_object_detection(image_path)
+
+            save_detection_results(image.id, detections)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
