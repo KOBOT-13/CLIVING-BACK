@@ -19,6 +19,7 @@ class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
 
+
 class SpecificMonthClimbingTimeView(APIView):   # 특정 달 클라이밍 시간 get (1월 ~12월 반복 불러오기로 사용하면 될 듯 함)
     def get(self, request, year, month):
         # 입력 받은 연월을 YYMM 형태로 포맷팅
