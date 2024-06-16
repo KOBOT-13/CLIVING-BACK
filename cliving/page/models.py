@@ -6,6 +6,7 @@ from moviepy.editor import VideoFileClip
 from datetime import *
 from django.core.files.storage import default_storage
 from django.utils import timezone
+from .hold_utils import perform_object_detection, save_detection_results
 import os
 
 COLOR_CHOICES = [
@@ -22,6 +23,20 @@ COLOR_CHOICES = [
     ('black', 'black'),
     ('white', 'white'),
 ]
+
+
+def time_to_seconds(time_obj):
+    return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
+
+def seconds_to_time(seconds):
+    # datetime.timedelta 객체 생성
+    time_delta = timedelta(seconds=seconds)
+    # 시간, 분, 초를 계산
+    hours = time_delta.seconds // 3600
+    minutes = (time_delta.seconds % 3600) // 60
+    seconds = time_delta.seconds % 60
+    # 시간 객체로 반환
+    return time(hour=hours, minute=minutes, second=seconds)
 
 # Create your models here.
 
@@ -126,6 +141,19 @@ class Hold(models.Model):
     y2 = models.FloatField()
     frame_id = models.ForeignKey(Frame, related_name="frame", on_delete=models.CASCADE)
     
-"""class FirstImage(models.Model):
+
+"""
+class FirstImage(models.Model):
+    image_id = models.IntegerField()
     image = models.ImageField(upload_to='images/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)"""
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        image_path = self.image.path
+
+        detections = perform_object_detection(image_path)
+
+        save_detection_results(self.id, detections)
+"""

@@ -1,8 +1,8 @@
 from django.urls import path, include
 
-from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, SpecificMonthClimbingTimeView, \
-    MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, AnnualColorTriesView #, Yolov8ViewSet
 
+from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, SpecificMonthClimbingTimeView, \
+    MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, AnnualColorTriesView #, Yolov8ViewSet, ImageUploadView
 
 from rest_framework.routers import DefaultRouter
 
@@ -22,5 +22,8 @@ urlpatterns = [
         path('statistics/climbing-time/<int:year>/<int:month>/', SpecificMonthClimbingTimeView.as_view(), name='specific-month-climbing-time'),
         path('statistics/monthly/color-tries/', MonthlyColorTriesView.as_view(), name='monthly-color-tries'),
         path('statistics/annual/color-tries/', AnnualColorTriesView.as_view(), name='annual-color-tries'),
+
+        path('upload/', ImageUploadView.as_view(), name='image-upload'),
+
     ])),
 ]
