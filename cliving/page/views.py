@@ -14,8 +14,6 @@ from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from .hold_utils import perform_object_detection, save_detection_results
 
-
-
 def time_to_seconds(time_obj):
     return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
 
@@ -23,7 +21,6 @@ def time_to_seconds(time_obj):
 class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
-
 class AllPagesView(APIView):
     def get(self, request, year, month):
         # 'date' 필드가 YYMMDD 형식이므로 year와 month를 기반으로 필터링
@@ -49,7 +46,6 @@ class SpecificMonthClimbingTimeView(APIView): # 특정 달 클라이밍 시간 g
             'total_climbing_time': total_time
         })
         return Response(serializer.data)
-
 class MonthlyClimbingTimeView(APIView):
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
@@ -63,8 +59,6 @@ class MonthlyClimbingTimeView(APIView):
             'total_climbing_time': total_time
         })
         return Response(serializer.data)
-
-
 class AnnualClimbingTimeView(APIView):
     def get(self, request):
         current_year = timezone.now().strftime('%y')
@@ -78,7 +72,6 @@ class AnnualClimbingTimeView(APIView):
         })
         return Response(serializer.data)
 
-
 class MonthlyColorTriesView(APIView):
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
@@ -90,7 +83,6 @@ class MonthlyColorTriesView(APIView):
 
         results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in color_counter.items()]
         return Response(results)
-
 class AnnualColorTriesView(APIView):
     def get(self, request):
         current_year = timezone.now().strftime('%y')
@@ -131,8 +123,6 @@ class VideoViewSet(viewsets.ModelViewSet):
                 start_checkpoint = None
 
         return Response({'status': 'clips created', 'clips': created_clips})
-
-
 class VideoFileView(APIView):
     def get(self, request, custom_id):
         video = get_object_or_404(Video, custom_id=custom_id)
@@ -143,15 +133,12 @@ class VideoFileView(APIView):
 class CheckpointViewSet(viewsets.ModelViewSet):
     queryset = Checkpoint.objects.all()
     serializer_class = CheckpointSerializer
-
 class FrameViewSet(viewsets.ModelViewSet):
     queryset = Frame.objects.all()
     serializer_class = FrameSerializer
-
 class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
-    
 class Yolov8ViewSet(viewsets.ModelViewSet):
     queryset = FirstImage.objects.all()
     serializer_class = FirstImageSerializer

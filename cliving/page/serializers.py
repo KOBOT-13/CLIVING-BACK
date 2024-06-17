@@ -55,7 +55,7 @@ class FirstImageSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FirstImage
-        field = ['image', 'bbox']
+        fields = ['image', 'bbox']
     def get_bbox(self, obj):
         output_dir = 'media/bbox'
         bbox_file_path = os.path.join(output_dir, f"{obj.id}_bbox.json")
