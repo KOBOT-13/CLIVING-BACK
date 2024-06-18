@@ -1,4 +1,6 @@
 from collections import Counter
+
+from django.core.files.base import ContentFile
 from django.shortcuts import render, get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -8,7 +10,7 @@ from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage, VideoClip
 from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, \
     ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer, VideoClipSerializer
 from rest_framework import viewsets, status
-from .video_utils import generate_clip
+from .video_utils import generate_clip, generate_thumbnail
 from django.db.models import Sum, Count, F
 import os
 from django.http import JsonResponse
@@ -115,21 +117,31 @@ class VideoViewSet(viewsets.ModelViewSet):
             elif checkpoint.type in [1, 2] and start_checkpoint:
                 start_time_sec = time_to_seconds(start_checkpoint.time)
                 end_time_sec = time_to_seconds(checkpoint.time)
+                mid_time_sec = (start_time_sec + end_time_sec) / 2  # 중간 시간 계산
+
                 output_dir = 'media/clips'
                 if not os.path.exists(output_dir):  #디렉토리 없으면 만들어줌.
                     os.makedirs(output_dir)
                 output_path = f'media/clips/{video.custom_id}_{start_time_sec}_{end_time_sec}.mp4' #클립 파일명 설정부분.
                 generate_clip(video.videofile.path, start_time_sec, end_time_sec, output_path)
-                video_clip = VideoClip.objects.create(
-                    video=video,
-                    page=video.page_id,
-                    start_time=start_checkpoint.time,
-                    end_time=checkpoint.time,
-                    clip_color=video.video_color,
-                    type=checkpoint.type,
-                    output_path=output_path
-                )
-                created_clips.append(video_clip)
+
+                # 썸네일 생성 및 저장
+                thumbnail_path = f'{output_dir}/{video.custom_id}_{start_time_sec}_{end_time_sec}.jpg'
+                generate_thumbnail(output_path, thumbnail_path, mid_time_sec)  # 썸네일 생성
+
+
+                with open(thumbnail_path, 'rb') as thumbnail_file:
+                    video_clip = VideoClip.objects.create(
+                        video=video,
+                        page=video.page_id,
+                        clip_color=video.video_color,
+                        start_time=start_checkpoint.time,
+                        end_time=checkpoint.time,
+                        type=checkpoint.type,
+                        output_path=output_path,
+                        thumbnail=ContentFile(thumbnail_file.read(), name=os.path.basename(thumbnail_path))  # 썸네일을 모델에 저장
+                    )
+                    created_clips.append(video_clip)
                 start_checkpoint = None
 
         return Response({'status': 'Clips created', 'video_clips': VideoClipSerializer(created_clips, many=True).data})

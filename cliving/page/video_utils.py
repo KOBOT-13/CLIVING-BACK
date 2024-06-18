@@ -18,3 +18,8 @@ def generate_clip(original_video_path, start_time, end_time, output_path, width=
             ffmpeg_params=['-crf', '18', '-preset', 'veryfast']
         )
 
+
+
+def generate_thumbnail(video_path, thumbnail_path, time):
+    with VideoFileClip(video_path) as video:
+        video.save_frame(thumbnail_path, t=time)
