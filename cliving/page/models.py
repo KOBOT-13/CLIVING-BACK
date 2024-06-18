@@ -137,6 +137,7 @@ class VideoClip(models.Model):
                                    verbose_name="Color of the hold")
     type = models.IntegerField(choices=TYPE_CHOICES)  # 예: 'start', 'success', 'fail'
     output_path = models.CharField(max_length=255)  # 클립 파일 경로
+    thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)
 
 
 class Checkpoint(models.Model):
