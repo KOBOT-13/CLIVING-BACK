@@ -4,8 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
-from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
-from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer
+from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage, VideoClip
+from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, \
+    ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer, VideoClipSerializer
 from rest_framework import viewsets, status
 from .video_utils import generate_clip
 from django.db.models import Sum, Count, F
@@ -112,17 +113,40 @@ class VideoViewSet(viewsets.ModelViewSet):
             if checkpoint.type == 0:
                 start_checkpoint = checkpoint
             elif checkpoint.type in [1, 2] and start_checkpoint:
-                start_time = time_to_seconds(start_checkpoint.time)
-                end_time = time_to_seconds(checkpoint.time)
+                start_time_sec = time_to_seconds(start_checkpoint.time)
+                end_time_sec = time_to_seconds(checkpoint.time)
                 output_dir = 'media/clips'
                 if not os.path.exists(output_dir):  #디렉토리 없으면 만들어줌.
                     os.makedirs(output_dir)
-                output_path = f'media/clips/{video.custom_id}_{start_time}_{end_time}.mp4' #클립 파일명 설정부분.
-                generate_clip(video.videofile.path, start_time, end_time, output_path)
-                created_clips.append(output_path)
+                output_path = f'media/clips/{video.custom_id}_{start_time_sec}_{end_time_sec}.mp4' #클립 파일명 설정부분.
+                generate_clip(video.videofile.path, start_time_sec, end_time_sec, output_path)
+                video_clip = VideoClip.objects.create(
+                    video=video,
+                    page=video.page_id,
+                    start_time=start_checkpoint.time,
+                    end_time=checkpoint.time,
+                    clip_color=video.video_color,
+                    type=checkpoint.type,
+                    output_path=output_path
+                )
+                created_clips.append(video_clip)
                 start_checkpoint = None
 
-        return Response({'status': 'clips created', 'clips': created_clips})
+        return Response({'status': 'Clips created', 'video_clips': VideoClipSerializer(created_clips, many=True).data})
+
+class VideoClipViewSet(viewsets.ModelViewSet):
+    queryset = VideoClip.objects.all()
+    serializer_class = VideoClipSerializer
+
+    @action(detail=False, methods=['get'])
+    def by_page(self, request):
+        page_id = request.query_params.get('page_id')
+        if page_id:
+            clips = VideoClip.objects.filter(page_id=page_id)
+            serializer = VideoClipSerializer(clips, many=True)
+            return Response(serializer.data)
+        return Response({"error": "page_id not provided"}, status=400)
+
 class VideoFileView(APIView):
     def get(self, request, custom_id):
         video = get_object_or_404(Video, custom_id=custom_id)

@@ -2,7 +2,8 @@ import os
 import json
 
 from rest_framework import serializers
-from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage
+from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage, VideoClip
+
 
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +18,11 @@ class VideoSerializer(serializers.ModelSerializer):
         output_dir = 'media/clips'
         video_clips = [f"{output_dir}/{clip}" for clip in os.listdir(output_dir) if clip.startswith(f"{obj.id}_")]
         return video_clips
+
+class VideoClipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VideoClip
+        fields = '__all__'
 
 class ClimbingTimeSerializer(serializers.Serializer):
     year = serializers.CharField(max_length=4)  # 연도 정보

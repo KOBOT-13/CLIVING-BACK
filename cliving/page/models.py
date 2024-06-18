@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models.signals import pre_save, post_save
@@ -24,6 +26,11 @@ COLOR_CHOICES = [
     ('white', 'white'),
 ]
 
+TYPE_CHOICES = [
+        (0, 'start'),
+        (1, 'success'),
+        (2, 'fail'),
+    ]
 
 def time_to_seconds(time_obj):
     return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
@@ -61,7 +68,7 @@ class Page(models.Model):
 class Video(models.Model):
     custom_id = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
     #비디오 키입니다. 형식은 아래 Line89에서 확인 가능.
-    page_id = models.ForeignKey(Page, related_name="page", null=True, on_delete=models.CASCADE)
+    page_id = models.ForeignKey(Page, related_name="video", null=True, on_delete=models.CASCADE)
     video_color = models.CharField(max_length=10, choices=COLOR_CHOICES, null=True, blank=True, verbose_name="Color of the hold")
     videofile = models.FileField(upload_to='videofiles/')
     end_time = models.DateTimeField(null=True, blank=True, editable=True, verbose_name="Recording End Time")
@@ -120,12 +127,19 @@ def update_bouldering_clear_color(sender, instance, created, **kwargs):
                 page.bouldering_clear_color = list(page.bouldering_clear_color)
                 page.save()
 
+class VideoClip(models.Model):
+    video_clip_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # UUID 필드
+    video = models.ForeignKey(Video, related_name='video_clips', on_delete=models.CASCADE)
+    page = models.ForeignKey(Page, related_name='video_clips', on_delete=models.CASCADE)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    clip_color = models.CharField(max_length=10, choices=COLOR_CHOICES, null=True, blank=True,
+                                   verbose_name="Color of the hold")
+    type = models.IntegerField(choices=TYPE_CHOICES)  # 예: 'start', 'success', 'fail'
+    output_path = models.CharField(max_length=255)  # 클립 파일 경로
+
+
 class Checkpoint(models.Model):
-    TYPE_CHOICES = [
-        (0, 'start'),
-        (1, 'success'),
-        (2, 'fail'),
-    ]
     video = models.ForeignKey(Video, related_name='checkpoints', on_delete=models.CASCADE)
     time = models.TimeField()
     type = models.IntegerField(choices=TYPE_CHOICES)
