@@ -146,13 +146,13 @@ class Checkpoint(models.Model):
     type = models.IntegerField(choices=TYPE_CHOICES)
 
 class Frame(models.Model):
-    date = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
+    date = models.CharField(max_length=10, primary_key=True, editable=False, unique=True)
     image = models.ImageField(upload_to='Frame/')
 
     
 class FirstImage(models.Model):
     id = models.AutoField(primary_key=True)
-    IMG_date = models.CharField(max_length=12, editable=False, unique=True)
+    IMG_date = models.CharField(max_length=10, editable=False, unique=True)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
