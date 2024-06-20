@@ -8,8 +8,7 @@ from rest_framework.views import APIView
 from django.utils import timezone
 from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage, VideoClip
 from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, \
-    ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer, VideoClipSerializer, \
-    VideoClipThumbnailSerializer
+    ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer, FirstImageCRUDSerializer, VideoClipSerializer, VideoClipThumbnailSerializer
 from rest_framework import viewsets, status
 from .video_utils import generate_clip, generate_thumbnail
 from django.db.models import Sum, Count, F
@@ -191,7 +190,14 @@ class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
 
+class FirstImageView(viewsets.ModelViewSet):
+    queryset = FirstImage.objects.all()
+    serializer_class = FirstImageCRUDSerializer
+
+
 class ImageUploadView(APIView):
+    serializer_class = FirstImageSerializer
+    
     def post(self, request, *args, **kwargs):
         serializer = FirstImageSerializer(data=request.data)
         if serializer.is_valid():

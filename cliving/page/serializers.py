@@ -60,6 +60,10 @@ class HoldSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 
+class FirstImageCRUDSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FirstImage
+        fields = '__all__'
 
 class FirstImageSerializer(serializers.ModelSerializer):
     bbox = serializers.SerializerMethodField()
