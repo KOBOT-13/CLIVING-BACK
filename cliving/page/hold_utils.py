@@ -22,8 +22,11 @@ def perform_object_detection(image_path):
 
     return detected_objects
 
-def save_detection_results(first_image, detections, output_dir='media/bbox'):
+def save_detection_results(first_image_id, detections, output_dir='media/bbox'):
     from .models import Hold, FirstImage, Frame 
+    
+    first_image = FirstImage.objects.get(id=first_image_id)
+    
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
