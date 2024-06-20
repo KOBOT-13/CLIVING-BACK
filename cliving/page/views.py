@@ -175,21 +175,6 @@ class FrameViewSet(viewsets.ModelViewSet):
 class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
-class Yolov8ViewSet(viewsets.ModelViewSet):
-    queryset = FirstImage.objects.all()
-    serializer_class = FirstImageSerializer
-
-    @action(detail = True, methods = ['post'])
-    def detect_image(self, request):
-        image_file = self.get_object()
-        image_path = default_storage.save(image_file.name, image_file)
-        image_path = os.path.join(default_storage.location, image_path)
-
-        detected_objects = perform_object_detection(image_path)
-
-        default_storage.delete(image_path)
-
-        return JsonResponse({'status': 'bboxes created', 'bboxes': detected_objects})
 
 class ImageUploadView(APIView):
     def post(self, request, *args, **kwargs):
