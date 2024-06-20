@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from django.utils import timezone
 from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage, VideoClip
 from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, FrameSerializer, HoldSerializer, \
-    ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer, FirstImageCRUDSerializer, VideoClipSerializer
+    ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer, FirstImageCRUDSerializer, VideoClipSerializer, VideoClipThumbnailSerializer
 from rest_framework import viewsets, status
 from .video_utils import generate_clip, generate_thumbnail
 from django.db.models import Sum, Count, F
@@ -158,6 +158,20 @@ class VideoClipViewSet(viewsets.ModelViewSet):
             serializer = VideoClipSerializer(clips, many=True)
             return Response(serializer.data)
         return Response({"error": "page_id not provided"}, status=400)
+
+class VideoClipThumbnailsView(APIView):
+    def get(self, request, page_id):
+        clips = VideoClip.objects.filter(page_id=page_id)
+        serializer = VideoClipThumbnailSerializer(clips, many=True)
+        thumbnails = [clip['thumbnail'] for clip in serializer.data]
+        return Response(thumbnails)
+
+class VideoClipPathsView(APIView):
+    def get(self, request, page_id):
+        clips = VideoClip.objects.filter(page_id=page_id)
+        serializer = VideoClipThumbnailSerializer(clips, many=True)
+        paths = [clip['output_path'] for clip in serializer.data]
+        return Response(paths)
 
 class VideoFileView(APIView):
     def get(self, request, custom_id):
