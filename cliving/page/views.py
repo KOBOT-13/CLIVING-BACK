@@ -118,33 +118,48 @@ class VideoViewSet(viewsets.ModelViewSet):
             elif checkpoint.type in [1, 2] and start_checkpoint:
                 start_time_sec = time_to_seconds(start_checkpoint.time)
                 end_time_sec = time_to_seconds(checkpoint.time)
-                mid_time_sec = (start_time_sec + end_time_sec) / 2  # 중간 시간 계산
+                mid_time_sec = (start_time_sec + end_time_sec) / 2 - start_time_sec  # 중간 시간 계산
 
                 output_dir = 'media/clips'
                 if not os.path.exists(output_dir):  #디렉토리 없으면 만들어줌.
                     os.makedirs(output_dir)
                 output_path = f'media/clips/{video.custom_id}_{start_time_sec}_{end_time_sec}.mp4' #클립 파일명 설정부분.
-                generate_clip(video.videofile.path, start_time_sec, end_time_sec, output_path)
+                print(f"Generating clip to path: {output_path}")
+                print(f"Video file path: {video.videofile.path}")
+
+                try:
+                    generate_clip(video.videofile.path, start_time_sec, end_time_sec, output_path)
+                except Exception as e:
+                    print(f"Error generating clip: {e}")
+                    continue
 
                 # 썸네일 생성 및 저장
                 thumbnail_path = f'{output_dir}/{video.custom_id}_{start_time_sec}_{end_time_sec}.jpg'
-                generate_thumbnail(output_path, thumbnail_path, mid_time_sec)  # 썸네일 생성
+                print(f"Generating thumbnail to path: {thumbnail_path}")
 
+                try:
+                    generate_thumbnail(output_path, thumbnail_path, mid_time_sec)
+                except Exception as e:
+                    print(f"Error generating thumbnail: {e}")
+                    continue
 
-                with open(thumbnail_path, 'rb') as thumbnail_file:
-                    video_clip = VideoClip.objects.create(
-                        video=video,
-                        page=video.page_id,
-                        clip_color=video.video_color,
-                        start_time=start_checkpoint.time,
-                        end_time=checkpoint.time,
-                        type=checkpoint.type,
-                        output_path=output_path,
-                        thumbnail=ContentFile(thumbnail_file.read(), name=os.path.basename(thumbnail_path))  # 썸네일을 모델에 저장
-                    )
-                    created_clips.append(video_clip)
+                try:
+                    with open(thumbnail_path, 'rb') as thumbnail_file:
+                        video_clip = VideoClip.objects.create(
+                            video=video,
+                            page=video.page_id,
+                            clip_color=video.video_color,
+                            start_time=start_checkpoint.time,
+                            end_time=checkpoint.time,
+                            type=checkpoint.type,
+                            output_path=output_path,
+                            thumbnail=ContentFile(thumbnail_file.read(), name=os.path.basename(thumbnail_path))
+                        )
+                        created_clips.append(video_clip)
+                except Exception as e:
+                    print(f"Error saving video clip: {e}")
+                    continue
                 start_checkpoint = None
-
         return Response({'status': 'Clips created', 'video_clips': VideoClipSerializer(created_clips, many=True).data})
 
 class VideoClipViewSet(viewsets.ModelViewSet):
