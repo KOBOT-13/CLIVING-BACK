@@ -28,6 +28,7 @@ def detect_pose(video):
         print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
     else:
         x1, x2, y1, y2 = top_hold.x1, top_hold.x2, top_hold.y1, top_hold.y2
+        print("Top Hold : ", x1,y1,x2,y2)
 
     cap = cv2.VideoCapture(video.videofile.path)
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
@@ -98,6 +99,7 @@ def detect_pose(video):
         )
 
     return {
+        'start_checkpoints' : start_checkpoints,
         'success_checkpoints': success_checkpoints,
         'failure_checkpoints': failure_checkpoints
     }
