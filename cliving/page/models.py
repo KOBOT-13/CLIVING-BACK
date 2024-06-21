@@ -151,6 +151,7 @@ class Frame(models.Model):
 
     
 class FirstImage(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
     IMG_date = models.CharField(max_length=10, editable=False, unique=True)
     image = models.ImageField(upload_to='images/')
