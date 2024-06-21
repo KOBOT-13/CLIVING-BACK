@@ -11,6 +11,7 @@ from .serializers import PageSerializer, VideoSerializer, CheckpointSerializer, 
     ColorTriesSerializer, ClimbingTimeSerializer, FirstImageSerializer, VideoClipSerializer
 from rest_framework import viewsets, status
 from .video_utils import generate_clip, generate_thumbnail
+from .pose_detect_utils import detect_pose
 from django.db.models import Sum, Count, F
 import os
 from django.http import JsonResponse
@@ -101,8 +102,47 @@ class AnnualColorTriesView(APIView):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    # 클립 생성 요청하는 방법 : http://127.0.0.1:8000/v1/video/<custom_id>/create_clip/ (POST or GET)
-    # 클립 확인하는 방법(디렉토리 위치로 -> 나중에 클립 확인 api 만들 예정임) : http://127.0.0.1:8000/media/clips/240526-01_7_15.mp4
+    # 클립 생성 요청하는 방법 : (POST)http://127.0.0.1:8000/v1/video/<custom_id>/create_clip/
+    # 비디오 직접 확인하는 방법 : http://127.0.0.1:8000/media/videofiles/240526-01.mp4
+    # 클립 직접 확인하는 방법 : http://127.0.0.1:8000/media/clips/240526-01_7_15.mp4
+
+    def create(self, request, *args, **kwargs):
+        video_file = request.FILES.get('videofile')
+        page_id = request.data.get('page_id')
+        video_color = request.data.get('video_color')
+
+        if not video_file:
+            return Response({'error': 'No video file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not page_id:
+            return Response({'error': 'No page ID provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Page 객체 가져오기
+        try:
+            page = Page.objects.get(id=page_id)
+        except Page.DoesNotExist:
+            return Response({'error': 'Invalid page ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Video 객체 생성
+        video = Video.objects.create(
+            videofile=video_file,
+            page_id=page,
+            video_color=video_color
+        )
+        return Response({'message': 'Video uploaded successfully', 'video_id': video.id}, status=status.HTTP_201_CREATED)
+
+
+    @action(detail=True, methods=['post'])
+    def create_checkpoint(self, request, pk=None):
+        try:
+            video = self.get_object()
+        except Video.DoesNotExist:
+            return Response({'error': 'Invalid video ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = detect_pose(video)
+
+        return Response(result, status=status.HTTP_200_OK)
+
     @action(detail = True, methods = ['post'])
     def create_clip(self, request, pk=None):
         video = self.get_object()
@@ -129,7 +169,6 @@ class VideoViewSet(viewsets.ModelViewSet):
                 thumbnail_path = f'{output_dir}/{video.custom_id}_{start_time_sec}_{end_time_sec}.jpg'
                 generate_thumbnail(output_path, thumbnail_path, mid_time_sec)  # 썸네일 생성
 
-
                 with open(thumbnail_path, 'rb') as thumbnail_file:
                     video_clip = VideoClip.objects.create(
                         video=video,
@@ -143,13 +182,13 @@ class VideoViewSet(viewsets.ModelViewSet):
                     )
                     created_clips.append(video_clip)
                 start_checkpoint = None
-
         return Response({'status': 'Clips created', 'video_clips': VideoClipSerializer(created_clips, many=True).data})
+
+
 
 class VideoClipViewSet(viewsets.ModelViewSet):
     queryset = VideoClip.objects.all()
     serializer_class = VideoClipSerializer
-
     @action(detail=False, methods=['get'])
     def by_page(self, request):
         page_id = request.query_params.get('page_id')
@@ -169,27 +208,14 @@ class VideoFileView(APIView):
 class CheckpointViewSet(viewsets.ModelViewSet):
     queryset = Checkpoint.objects.all()
     serializer_class = CheckpointSerializer
+
 class FrameViewSet(viewsets.ModelViewSet):
     queryset = Frame.objects.all()
     serializer_class = FrameSerializer
+
 class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
-class Yolov8ViewSet(viewsets.ModelViewSet):
-    queryset = FirstImage.objects.all()
-    serializer_class = FirstImageSerializer
-
-    @action(detail = True, methods = ['post'])
-    def detect_image(self, request):
-        image_file = self.get_object()
-        image_path = default_storage.save(image_file.name, image_file)
-        image_path = os.path.join(default_storage.location, image_path)
-
-        detected_objects = perform_object_detection(image_path)
-
-        default_storage.delete(image_path)
-
-        return JsonResponse({'status': 'bboxes created', 'bboxes': detected_objects})
 
 class ImageUploadView(APIView):
     def post(self, request, *args, **kwargs):
@@ -197,10 +223,7 @@ class ImageUploadView(APIView):
         if serializer.is_valid():
             image = serializer.save()
             image_path = image.image.path
-
             detections = perform_object_detection(image_path)
-
             save_detection_results(image.id, detections)
-
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

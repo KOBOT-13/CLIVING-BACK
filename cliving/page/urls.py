@@ -1,13 +1,8 @@
 from django.urls import path, include
 
-from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, Yolov8ViewSet, \
+from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet,  \
     SpecificMonthClimbingTimeView, MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, \
-    AnnualColorTriesView, ImageUploadView, VideoClipViewSet
-
-from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, \
-    SpecificMonthClimbingTimeView, \
-    MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, AnnualColorTriesView, \
-    VideoFileView, AllPagesView, Yolov8ViewSet, ImageUploadView
+    AnnualColorTriesView, VideoFileView, AllPagesView, ImageUploadView, VideoClipViewSet
 
 from rest_framework.routers import DefaultRouter
 
@@ -18,7 +13,6 @@ router.register('videoclips', VideoClipViewSet)
 router.register('checkpoint', CheckpointViewSet)
 router.register('frame', FrameViewSet)
 router.register('hold', HoldViewSet)
-router.register('yolov8', Yolov8ViewSet)
 
 urlpatterns = [
     path('v1/', include([

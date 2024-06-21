@@ -150,6 +150,7 @@ class Frame(models.Model):
 
     
 class FirstImage(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
