@@ -181,6 +181,7 @@ class FirstImage(models.Model):
 
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
+    is_bottom = models.BooleanField(default=False, verbose_name="bottom")
     first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
     x1 = models.FloatField()
     x2 = models.FloatField()
