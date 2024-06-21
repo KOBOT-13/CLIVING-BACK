@@ -146,20 +146,26 @@ class Checkpoint(models.Model):
     type = models.IntegerField(choices=TYPE_CHOICES)
 
 class Frame(models.Model):
+    date = models.CharField(max_length=10, primary_key=True, editable=False, unique=True)
     image = models.ImageField(upload_to='Frame/')
 
     
 class FirstImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
+    id = models.AutoField(primary_key=True)
+    IMG_date = models.CharField(max_length=10, editable=False, unique=True)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        if not self.IMG_date:
+            self.IMG_date = datetime.now().strftime('%y%m%d%H%M')
+            
         super().save(*args, **kwargs)
 
         detections = perform_object_detection(self.image.path)
         
-        frame_instance = Frame.objects.create(image=self.image)
+        frame_instance = Frame.objects.create(image=self.image,date=self.IMG_date)
         
         for index, detection in enumerate(detections, start=1): 
             box = detection['box']

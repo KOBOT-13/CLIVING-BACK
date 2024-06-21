@@ -24,6 +24,11 @@ class VideoClipSerializer(serializers.ModelSerializer):
         model = VideoClip
         fields = '__all__'
 
+class VideoClipThumbnailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VideoClip
+        fields = ['output_path', 'thumbnail']
+
 class ClimbingTimeSerializer(serializers.Serializer):
     year = serializers.CharField(max_length=4)  # 연도 정보
     month = serializers.CharField(max_length=2, required=False)  # 월 정보, 연간 뷰에서는 필요 없음
@@ -55,6 +60,10 @@ class HoldSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 
+class FirstImageCRUDSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FirstImage
+        fields = '__all__'
 
 class FirstImageSerializer(serializers.ModelSerializer):
     bbox = serializers.SerializerMethodField()
