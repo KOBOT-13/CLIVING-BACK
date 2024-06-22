@@ -230,6 +230,20 @@ class VideoClipPathsView(APIView):
         paths = [clip['output_path'] for clip in serializer.data]
         return Response(paths)
 
+class VideoClipColorsView(APIView):
+    def get(self, request, page_id):
+        clips = VideoClip.objects.filter(page_id=page_id)
+        serializer = VideoClipThumbnailSerializer(clips, many=True)
+        color = [clip['clip_color'] for clip in serializer.data]
+        return Response(color)
+
+class VideoClipTypesView(APIView):
+    def get(self, request, page_id):
+        clips = VideoClip.objects.filter(page_id=page_id)
+        serializer = VideoClipThumbnailSerializer(clips, many=True)
+        type = [clip['type'] for clip in serializer.data]
+        return Response(type)
+
 class VideoFileView(APIView):
     def get(self, request, custom_id):
         video = get_object_or_404(Video, custom_id=custom_id)

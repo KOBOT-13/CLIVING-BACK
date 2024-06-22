@@ -27,7 +27,7 @@ class VideoClipSerializer(serializers.ModelSerializer):
 class VideoClipThumbnailSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoClip
-        fields = ['output_path', 'thumbnail']
+        fields = ['output_path', 'thumbnail', 'clip_color', 'type']
 
 class ClimbingTimeSerializer(serializers.Serializer):
     year = serializers.CharField(max_length=4)  # 연도 정보
