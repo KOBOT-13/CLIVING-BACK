@@ -50,38 +50,38 @@ def detect_pose(video):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(frame)
 
-
-            # 특정 조건 확인
             # 특정 조건 확인
             if results.pose_landmarks:
-                left_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
-                right_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
-                left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
-                right_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST]
+                try:
+                    left_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
+                    right_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
+                    left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
+                    right_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST]
+                except (IndexError, TypeError):
+                    # 발 또는 손목 탐지 실패 시 다음 프레임으로 넘어감
+                    continue
 
-            # bottom_hold에 처음 지나가면 is_started를 True로 변경
-            if not is_started and (
-                (y3 <= left_foot_y <= y4) or
-                ( y3 <= right_foot_y<= y4)
-            ):
+                # bottom_hold에 처음 지나가면 is_started를 True로 변경
+                if not is_started and (
+                    (y3 <= left_foot_y <= y4) or
+                    (y3 <= right_foot_y <= y4)
+                ):
                     is_started = True
                     start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                     start_checkpoints.append(start_checkpoint)
 
-            # is_started가 True일 때만 실패/성공 체크
-            if is_started:
-            
-            # 왼손 또는 오른손이 특정 좌표 범위에 닿으면 성공
-                if (x1 <= left_wrist.x <= x2 and y1 <= left_wrist.y <= y2) or \
-                    (x1 <= right_wrist.x <= x2 and y1 <= right_wrist.y <= y2):
-                    success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-                    success_checkpoints.append(success_checkpoint)
-                    is_started = False  # 다음 게임을 위해 대기 상태로 전환
-                    
+                # is_started가 True일 때만 실패/성공 체크
+                if is_started:
+                    # 왼손 또는 오른손이 특정 좌표 범위에 닿으면 성공
+                    if (x1 <= left_wrist.x <= x2 and y1 <= left_wrist.y <= y2) or \
+                        (x1 <= right_wrist.x <= x2 and y1 <= right_wrist.y <= y2):
+                        success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                        success_checkpoints.append(success_checkpoint)
+                        is_started = False  # 다음 게임을 위해 대기 상태로 전환
 
-            # bottom_hold를 지나가면 is_started를 False로 변경
-                if ( y3 <= left_foot_y <= y4) or \
-                    (y3 <= right_foot_y <= y4):
+                    # bottom_hold를 지나가면 is_started를 False로 변경
+                    if (y3 <= left_foot_y <= y4) or \
+                        (y3 <= right_foot_y <= y4):
                         is_started = False
                         failure_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         failure_checkpoints.append(failure_checkpoint)
@@ -111,8 +111,7 @@ def detect_pose(video):
         )
 
     return {
-        'start_checkpoints' : start_checkpoints,
+        'start_checkpoints': start_checkpoints,
         'success_checkpoints': success_checkpoints,
         'failure_checkpoints': failure_checkpoints
     }
-
