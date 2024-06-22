@@ -118,18 +118,32 @@ class VideoViewSet(viewsets.ModelViewSet):
             duration = int(video.duration)  # 비디오 길이 계산
             start_time = end_time - timedelta(seconds=duration)  # 시작 시간 계산
         page = Page.objects.get(date=page_id)
-        page.bouldering_clear_color
 
         if not page.bouldering_clear_color:
             page.bouldering_clear_color = []
+            page.bouldering_clear_color_counter = []
+            page.color_success_counter = []
+            page.color_fail_counter = []
+
         if video_color not in page.bouldering_clear_color:
             page.bouldering_clear_color.append(video_color)
+            page.bouldering_clear_color_counter.append(0)
+            page.color_success_counter.append(0)
+            page.color_fail_counter.append(0)
+            this_color_index = page.bouldering_clear_color.index(video_color)
+
+
+        if page.today_start_time is None:
+            page.today_start_time = start_time # 첫번째 영상을 시작한 시간
+
+        page.today_end_time = end_time # 마지막 영상을 끝낸 시간
 
         if page.play_time is None:
             page.play_time = duration
         else:
             page.play_time += duration
-        page.save(update_fields=['play_time', 'bouldering_clear_color'])
+        page.save(update_fields=['play_time', 'bouldering_clear_color','bouldering_clear_color_counter',\
+                  'color_success_counter','color_fail_counter', 'today_start_time', 'today_end_time'])
 
         date_str = timezone.now().strftime('%y%m%d')
         count = Video.objects.filter(custom_id__startswith=date_str).count() + 1
@@ -163,6 +177,7 @@ class VideoViewSet(viewsets.ModelViewSet):
     def create_clip(self, request, pk=None):
         video = self.get_object()
         checkpoints = video.checkpoints.order_by('time') #체크포인트를 시간순으로 정렬
+        page = Page.objects.get(date=video.page_id)
 
         start_checkpoint = None
         created_clips = []
@@ -199,6 +214,15 @@ class VideoViewSet(viewsets.ModelViewSet):
                     print(f"Error generating thumbnail: {e}")
                     continue
 
+                this_color_index = page.bouldering_clear_color.index(video.video_color)
+
+                page.bouldering_clear_color_counter[this_color_index] += 1
+                if(checkpoint.type == 1):
+                    page.color_success_counter[this_color_index] += 1
+                elif(checkpoint.type == 2):
+                    page.color_fail_counter[this_color_index] += 1
+                page.save(update_fields=['bouldering_clear_color_counter','color_success_counter', 'color_fail_counter'])
+
                 try:
                     with open(thumbnail_path, 'rb') as thumbnail_file:
                         video_clip = VideoClip.objects.create(
@@ -223,6 +247,7 @@ class VideoViewSet(viewsets.ModelViewSet):
 class VideoClipViewSet(viewsets.ModelViewSet):
     queryset = VideoClip.objects.all()
     serializer_class = VideoClipSerializer
+
     @action(detail=False, methods=['get'])
     def by_page(self, request):
         page_id = request.query_params.get('page_id')
