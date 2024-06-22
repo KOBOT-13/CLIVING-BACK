@@ -1,5 +1,5 @@
 import uuid
-
+import logging
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models.signals import pre_save, post_save
@@ -114,18 +114,35 @@ def set_custom_id(sender, instance, **kwargs):
         sequence_str = f'{count:02d}'  # 두 자리 숫자 (01, 02, ...)
         instance.custom_id = f'{date_str}-{sequence_str}'
 
+logger = logging.getLogger(__name__)
 @receiver(post_save, sender=Video)
 def update_bouldering_clear_color(sender, instance, created, **kwargs):
     if created and instance.video_color:  # 비디오가 새로 생성되고, video_color 정보가 있을 때만 실행
-        current_day = timezone.now().strftime('%y%m%d')
-        page = Page.objects.filter(date=current_day).first()  # 날짜를 기반으로 페이지 검색
-        if page:
-            if not page.bouldering_clear_color:
-                page.bouldering_clear_color = []
-            if instance.video_color not in page.bouldering_clear_color:
-                page.bouldering_clear_color.append(instance.video_color)
-                page.bouldering_clear_color = list(page.bouldering_clear_color)
-                page.save()
+        try:
+            current_day = timezone.now().strftime('%y%m%d')
+            logger.debug(f"Current day: {current_day}")
+
+            page = Page.objects.filter(date=current_day).first()
+            logger.debug(f"Page found: {page}")
+
+            if page:
+                if not page.bouldering_clear_color:
+                    page.bouldering_clear_color = []
+
+                logger.debug(f"Current bouldering_clear_color list: {page.bouldering_clear_color}")
+
+                if instance.video_color not in page.bouldering_clear_color:
+                    page.bouldering_clear_color.append(instance.video_color)
+                    page.bouldering_clear_color = list(set(page.bouldering_clear_color))  # 중복 제거
+                    page.save()
+
+                    logger.debug(f"Updated bouldering_clear_color list: {page.bouldering_clear_color}")
+                else:
+                    logger.debug(f"Color {instance.video_color} already in list.")
+            else:
+                logger.debug("No page found for the current day.")
+        except Exception as e:
+            logger.error(f"Error updating bouldering_clear_color: {e}")
 
 class VideoClip(models.Model):
     video_clip_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # UUID 필드
