@@ -42,13 +42,13 @@ def detect_pose(video):
     cap = cv2.VideoCapture(video.videofile.path)
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
         while cap.isOpened():
-            success, image = cap.read()
+            success, frame = cap.read()
             if not success:
                 break
 
             # MediaPipe 포즈 탐지 수행
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            results = pose.process(image)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = pose.process(frame)
 
 
             # 특정 조건 확인
@@ -72,8 +72,8 @@ def detect_pose(video):
             if is_started:
             
             # 왼손 또는 오른손이 특정 좌표 범위에 닿으면 성공
-                if (x1 < left_wrist.x < x2 and y1 < left_wrist.y < y2) or \
-                    (x1 < right_wrist.x < x2 and y1 < right_wrist.y < y2):
+                if (x1 <= left_wrist.x <= x2 and y1 <= left_wrist.y <= y2) or \
+                    (x1 <= right_wrist.x <= x2 and y1 <= right_wrist.y <= y2):
                     success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                     success_checkpoints.append(success_checkpoint)
                     is_started = False  # 다음 게임을 위해 대기 상태로 전환
@@ -116,14 +116,3 @@ def detect_pose(video):
         'failure_checkpoints': failure_checkpoints
     }
 
-"""
-# 데이터베이스에서 좌표값 가져오기
-Hold = Hold.objects.first()
-if Hold:
-    x1, x2 = Hold.x1, Hold.x2
-    y1, y2 = Hold.y1, Hold.y2
-else:
-    # 좌표값이 없는 경우 기본값 설정
-    x1, x2 = 0.4, 0.6
-    y1, y2 = 0.2, 0.4 
-"""
