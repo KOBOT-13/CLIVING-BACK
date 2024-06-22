@@ -36,6 +36,7 @@ urlpatterns = [
         path('hold/<int:first_image>/<int:index_number>/', HoldViewSet.as_view({'get': 'first_image_and_index_number'})),
         path('videoclips/by_page/colors/<str:page_id>/', VideoClipColorsView.as_view()),  # 썸네일 뷰 엔드포인트 추가
         path('videoclips/by_page/types/<str:page_id>/', VideoClipTypesView.as_view()),  # 썸네일 뷰 엔드포인트 추가    ])),
+        path('firstimage/<int:first_image>/', FirstImageView.as_view({'get': 'first_image_id'})),
     ])),
 ]
     

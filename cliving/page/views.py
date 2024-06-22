@@ -289,6 +289,13 @@ class HoldViewSet(viewsets.ModelViewSet):
 class FirstImageView(viewsets.ModelViewSet):
     queryset = FirstImage.objects.all()
     serializer_class = FirstImageCRUDSerializer
+    def first_image_id(self, request, first_image=None):
+        try:
+            firstimage = FirstImage.objects.get(id=first_image)
+            serializer = FirstImageSerializer(firstimage)
+            return Response(serializer.data)
+        except FirstImage.DoesNotExist:
+            return Response({'error': 'Not found'}, status=404)
 
 class ImageUploadView(APIView):
     serializer_class = FirstImageSerializer

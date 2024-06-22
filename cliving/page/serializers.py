@@ -61,19 +61,12 @@ class FirstImageCRUDSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class FirstImageSerializer(serializers.ModelSerializer):
-    bbox = serializers.SerializerMethodField()
+    holds = serializers.SerializerMethodField()
     
     class Meta:
         model = FirstImage
-        fields = ['image', 'bbox']
-    def get_bbox(self, obj):
-        output_dir = 'media/bbox'
-        bbox_file_path = os.path.join(output_dir, f"{obj.id}_bbox.json")
+        fields = ['image', 'holds']
 
-        if os.path.exists(bbox_file_path):
-            with open(bbox_file_path, 'r') as bbox_file:
-                detected_bbox = json.load(bbox_file)
-        else:
-            detected_bbox = []
-
-        return detected_bbox
+    def get_holds(self, obj):
+        holds = Hold.objects.filter(first_image=obj)
+        return HoldSerializer(holds, many=True).data
