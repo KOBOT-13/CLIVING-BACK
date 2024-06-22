@@ -75,43 +75,25 @@ class Video(models.Model):
     start_time = models.DateTimeField(verbose_name="Recording Start Time", null=True, blank=True)
     duration = models.IntegerField(help_text="Duration of the video in seconds", null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        is_new = self._state.adding  # 비디오 객체가 새로 생성되는지 여부 판단
-
-        if not self.end_time:
-            self.end_time = timezone.now()
-            self.save(update_fields=['end_time'])
-
-        super(Video, self).save(*args, **kwargs)
-
-        # 파일의 실제 저장 경로를 구하고, 해당 파일이 존재하는지 확인
-        file_path = self.videofile.path
-        if default_storage.exists(file_path):  # 파일 존재 여부를 확인
-            try:
-                with VideoFileClip(file_path) as video:
-                    self.duration = int(video.duration)  # 비디오 길이 계산
-                    self.start_time = self.end_time - timedelta(seconds=self.duration)  # 시작 시간 계산
-                    super().save(*args, **kwargs)  # 변경된 정보를 다시 저장
-            except Exception as e:
-                print(f"Error processing video file {file_path}: {e}")
-        else:
-            print(f"File not found: {file_path}")
-        if is_new and self.end_time:
-            if self.page_id.play_time is None:
-                self.page_id.play_time = self.duration
-            else:
-                self.page_id.play_time += self.duration
-            self.page_id.save()
+    # def save(self, *args, **kwargs):
+    #     is_new = self._state.adding  # 비디오 객체가 새로 생성되는지 여부 판단
+    #
+    #     if is_new and self.end_time:
+    #         if self.page_id.play_time is None:
+    #             self.page_id.play_time = self.duration
+    #         else:
+    #             self.page_id.play_time += self.duration
+    #         self.page_id.save()
 
 #비디오 키를 설정합니다. 비디오키는 YYMMDD-(두자리수)
 # ex) 240526-01
-@receiver(pre_save, sender=Video)
-def set_custom_id(sender, instance, **kwargs):
-    if not instance.custom_id:
-        date_str = timezone.now().strftime('%y%m%d')
-        count = Video.objects.filter(custom_id__startswith=date_str).count() + 1
-        sequence_str = f'{count:02d}'  # 두 자리 숫자 (01, 02, ...)
-        instance.custom_id = f'{date_str}-{sequence_str}'
+# @receiver(pre_save, sender=Video)
+# def set_custom_id(sender, instance, **kwargs):
+#     if not instance.custom_id:
+#         date_str = timezone.now().strftime('%y%m%d')
+#         count = Video.objects.filter(custom_id__startswith=date_str).count() + 1
+#         sequence_str = f'{count:02d}'  # 두 자리 숫자 (01, 02, ...)
+#         instance.custom_id = f'{date_str}-{sequence_str}'
 
 
 class VideoClip(models.Model):

@@ -13,10 +13,13 @@ from rest_framework import viewsets, status
 from .video_utils import generate_clip, generate_thumbnail
 from .pose_detect_utils import detect_pose
 from django.db.models import Sum, Count, F
+from datetime import *
+from django.utils import timezone
 import os
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from .hold_utils import perform_object_detection, save_detection_results
+from moviepy.editor import VideoFileClip
 
 def time_to_seconds(time_obj):
     return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
@@ -106,7 +109,44 @@ class VideoViewSet(viewsets.ModelViewSet):
     # 비디오 직접 확인하는 방법 : http://127.0.0.1:8000/media/videofiles/240526-01.mp4
     # 클립 직접 확인하는 방법 : http://127.0.0.1:8000/media/clips/240526-01_7_15.mp4
 
+    def create(self, request, *args, **kwargs):
+        video_file = request.FILES.get('videofile')
+        page_id = request.data.get('page_id')
+        video_color = request.data.get('video_color')
+        end_time = timezone.now()
+        with VideoFileClip(video_file.temporary_file_path()) as video:
+            duration = int(video.duration)  # 비디오 길이 계산
+            start_time = end_time - timedelta(seconds=duration)  # 시작 시간 계산
+        page = Page.objects.get(date=page_id)
+        page.bouldering_clear_color
 
+        if not page.bouldering_clear_color:
+            page.bouldering_clear_color = []
+        if video_color not in page.bouldering_clear_color:
+            page.bouldering_clear_color.append(video_color)
+
+        if page.play_time is None:
+            page.play_time = duration
+        else:
+            page.play_time += duration
+        page.save(update_fields=['play_time', 'bouldering_clear_color'])
+
+        date_str = timezone.now().strftime('%y%m%d')
+        count = Video.objects.filter(custom_id__startswith=date_str).count() + 1
+        sequence_str = f'{count:02d}'  # 두 자리 숫자 (01, 02, ...)
+        custom_id = f'{date_str}-{sequence_str}'
+
+        video = Video.objects.create(
+            custom_id = custom_id,
+            videofile=video_file,
+            page_id=page,
+            video_color=video_color,
+            end_time=end_time,
+            start_time=start_time,
+            duration=duration
+        )
+
+        return Response({'message': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def create_checkpoint(self, request, pk=None):
