@@ -51,7 +51,7 @@ class Page(models.Model):
     date = models.CharField(max_length=6, primary_key=True, editable=False)
     date_dateFieldValue = models.DateField(auto_now_add=True, verbose_name="date_dateFieldValue")
     climbing_center_name = models.CharField(max_length=20, verbose_name="center_name")
-    bouldering_clear_color = ArrayField(models.CharField(max_length=10, choices=COLOR_CHOICES),null=True, blank=True, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
+    bouldering_clear_color = ArrayField(models.CharField(max_length=12, choices=COLOR_CHOICES),null=True, blank=True, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
     today_start_time = models.TimeField(blank=True, null=True, verbose_name="start")  #암장에서 첫번째 영상을 시작한 시간
     today_end_time = models.TimeField(blank=True, null=True, verbose_name="end")  #암장에서 마지막 영상을 끝낸 시간(암장에서 있던 시간을 기록)
     play_time = models.IntegerField(help_text="climbing total play time in seconds", null=True, blank=True)  #영상 촬영 시간
@@ -69,7 +69,7 @@ class Video(models.Model):
     custom_id = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
     #비디오 키입니다. 형식은 아래 Line89에서 확인 가능.
     page_id = models.ForeignKey(Page, related_name="video", null=True, on_delete=models.CASCADE)
-    video_color = models.CharField(max_length=10, choices=COLOR_CHOICES, null=True, blank=True, verbose_name="Color of the hold")
+    video_color = models.CharField(max_length=12, choices=COLOR_CHOICES, null=True, blank=True, verbose_name="Color of the hold")
     videofile = models.FileField(upload_to='videofiles/')
     end_time = models.DateTimeField(null=True, blank=True, editable=True, verbose_name="Recording End Time")
     start_time = models.DateTimeField(verbose_name="Recording Start Time", null=True, blank=True)
@@ -133,33 +133,33 @@ class VideoClip(models.Model):
     page = models.ForeignKey(Page, related_name='video_clips', on_delete=models.CASCADE)
     start_time = models.TimeField()
     end_time = models.TimeField()
-    clip_color = models.CharField(max_length=10, choices=COLOR_CHOICES, null=True, blank=True,
+    clip_color = models.CharField(max_length=12, choices=COLOR_CHOICES, null=True, blank=True,
                                    verbose_name="Color of the hold")
     type = models.IntegerField(choices=TYPE_CHOICES)  # 예: 'start', 'success', 'fail'
     output_path = models.CharField(max_length=255)  # 클립 파일 경로
     thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)
 
 
-class Checkpoint(models.Model):
+class Checkpoint(models.Model): 
     video = models.ForeignKey(Video, related_name='checkpoints', on_delete=models.CASCADE)
     time = models.TimeField()
     type = models.IntegerField(choices=TYPE_CHOICES)
 
 class Frame(models.Model):
-    date = models.CharField(max_length=10, primary_key=True, editable=False, unique=True)
+    date = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
     image = models.ImageField(upload_to='Frame/')
 
     
 class FirstImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
-    IMG_date = models.CharField(max_length=10, editable=False, unique=True)
+    IMG_date = models.CharField(max_length=12, editable=False, unique=True)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.IMG_date:
-            self.IMG_date = datetime.now().strftime('%y%m%d%H%M')
+            self.IMG_date = datetime.now().strftime('%y%m%d%H%M%S')
             
         super().save(*args, **kwargs)
 
@@ -167,9 +167,10 @@ class FirstImage(models.Model):
         
         frame_instance = Frame.objects.create(image=self.image,date=self.IMG_date)
         
+        holds = []
         for index, detection in enumerate(detections, start=1): 
             box = detection['box']
-            Hold.objects.create(
+            hold = Hold(
                 first_image=self,
                 x1=box[0][0],
                 y1=box[0][1],
@@ -178,9 +179,26 @@ class FirstImage(models.Model):
                 frame=frame_instance,
                 index_number=index
             )
+            holds.append(hold)
+        
+        Hold.objects.bulk_create(holds)
+        
+        self.update_bottom_hold(frame_instance)
 
+    def update_bottom_hold(self, frame_instance):
+        if Hold.objects.filter(first_image=self, frame=frame_instance).exists():
+            Hold.objects.filter(first_image=self, frame=frame_instance).update(is_bottom=False)
+
+            bottom_hold = Hold.objects.filter(first_image=self, frame=frame_instance).order_by('y2').last()
+
+            if bottom_hold:
+                bottom_hold.is_bottom = True
+                bottom_hold.save()
+                print(bottom_hold)
+                
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
+    is_bottom = models.BooleanField(default=False, verbose_name="bottom")
     first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
     x1 = models.FloatField()
     x2 = models.FloatField()

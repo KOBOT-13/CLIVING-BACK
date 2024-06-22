@@ -88,7 +88,7 @@ def detect_pose(video):
                         failure_checkpoints.append(failure_checkpoint)
 
     cap.release()
-
+    #test
     # 시작점 체크포인트 저장
     for timestamp in start_checkpoints:
         Checkpoint.objects.create(
