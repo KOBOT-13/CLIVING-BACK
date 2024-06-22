@@ -16,6 +16,7 @@ def detect_pose(video):
     failure_checkpoints = []
 
     is_started = False
+    skip_frames = 0
 
     try:
         latest_first_image = FirstImage.objects.latest('created_at')
@@ -29,15 +30,15 @@ def detect_pose(video):
         x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4
         print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
     else:
-        x1, x2, y1, y2 = (top_hold.x1, top_hold.x2, top_hold.y1, top_hold.y2) / 2376
+        x1, x2, y1, y2 = (top_hold.x1/ 1179, top_hold.x2/ 1179, top_hold.y1/ 2087, top_hold.y2/ 2087)
         print("Top Hold : ", x1,y1,x2,y2)
 
     if not bottom_hold:
         x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2
         print("'custom_error': No bottom hold found for the latest first image. However, we will proceed with the default values x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2.")
     else:
-        x3, x4, y3, y4 = (bottom_hold.x1, bottom_hold.x2, bottom_hold.y1, bottom_hold.y2) / 4224
-        print("Bottom Hold : ", x1,y1,x2,y2)
+        x3, x4, y3, y4 = (bottom_hold.x1/ 1179, bottom_hold.x2/ 1179, bottom_hold.y1/ 2087, bottom_hold.y2/ 2087)
+        print("Bottom Hold : ", x3,y3,x4,y4)
 
     cap = cv2.VideoCapture(video.videofile.path)
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
@@ -45,6 +46,10 @@ def detect_pose(video):
             success, frame = cap.read()
             if not success:
                 break
+
+            if skip_frames > 0:
+                skip_frames -= 1
+                continue
 
             # MediaPipe 포즈 탐지 수행
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -62,7 +67,6 @@ def detect_pose(video):
                     continue
                 
                 # bottom_hold에 처음 지나가면 is_started를 True로 변경
-
                 if not is_started and (
                     (y3 <= left_foot_y <= y4) or
                     (y3 <= right_foot_y <= y4)
@@ -70,6 +74,7 @@ def detect_pose(video):
                     is_started = True
                     start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                     start_checkpoints.append(start_checkpoint)
+                    skip_frames = 60  # 60프레임 건너뛰기
 
                 # is_started가 True일 때만 실패/성공 체크
                 if is_started:
@@ -79,6 +84,7 @@ def detect_pose(video):
                         success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         success_checkpoints.append(success_checkpoint)
                         is_started = False  # 다음 게임을 위해 대기 상태로 전환
+                        skip_frames = 60  # 60프레임 건너뛰기
 
                     # bottom_hold를 지나가면 is_started를 False로 변경
                     if (y3 <= left_foot_y <= y4) or \
@@ -86,9 +92,10 @@ def detect_pose(video):
                         is_started = False
                         failure_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         failure_checkpoints.append(failure_checkpoint)
+                        skip_frames = 60  # 60프레임 건너뛰기
 
     cap.release()
-    #test
+
     # 시작점 체크포인트 저장
     for timestamp in start_checkpoints:
         Checkpoint.objects.create(
