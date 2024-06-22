@@ -278,6 +278,13 @@ class FrameViewSet(viewsets.ModelViewSet):
 class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
+    def first_image_and_index_number(self, request, first_image=None, index_number=None):
+        try:
+            hold = Hold.objects.get(first_image_id=first_image, index_number=index_number)
+            serializer = HoldSerializer(hold)
+            return Response(serializer.data)
+        except Hold.DoesNotExist:
+            return Response({'error': 'Not found'}, status=404)
 
 class FirstImageView(viewsets.ModelViewSet):
     queryset = FirstImage.objects.all()
