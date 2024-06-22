@@ -289,13 +289,14 @@ class HoldViewSet(viewsets.ModelViewSet):
 class FirstImageView(viewsets.ModelViewSet):
     queryset = FirstImage.objects.all()
     serializer_class = FirstImageCRUDSerializer
+    
     def first_image_id(self, request, first_image=None):
         try:
-            firstimage = FirstImage.objects.get(id=first_image)
-            serializer = FirstImageSerializer(firstimage)
-            return Response(serializer.data)
-        except FirstImage.DoesNotExist:
-            return Response({'error': 'Not found'}, status=404)
+            holds = Hold.objects.filter(first_image_id=first_image)
+            frames = [hold.frame for hold in holds]
+            return Response({'frames': frames})
+        except Hold.DoesNotExist:
+            return Response({'error': 'Hold not found'}, status=404)
 
 class ImageUploadView(APIView):
     serializer_class = FirstImageSerializer
