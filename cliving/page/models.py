@@ -77,7 +77,7 @@ class Video(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding  # 비디오 객체가 새로 생성되는지 여부 판단
-        super().save(*args, **kwargs)  # 먼저 모델 저장하여 파일이 시스템에 확실히 쓰여지게 함
+        # super().save(*args, **kwargs)  # 먼저 모델 저장하여 파일이 시스템에 확실히 쓰여지게 함
 
         if not self.end_time:
             self.end_time = timezone.now()
@@ -114,23 +114,6 @@ def set_custom_id(sender, instance, **kwargs):
         sequence_str = f'{count:02d}'  # 두 자리 숫자 (01, 02, ...)
         instance.custom_id = f'{date_str}-{sequence_str}'
 
-@receiver(post_save, sender=Video)
-def update_bouldering_clear_color(sender, instance, created, **kwargs):
-    if created and instance.video_color:  # 비디오가 새로 생성되고, video_color 정보가 있을 때만 실행
-        current_day = timezone.now().strftime('%y%m%d')
-        print("디버그 : current_day : ", current_day)
-        print("디버그 : instance.video_color : ", instance.video_color)
-        page = Page.objects.filter(date=current_day).first()  # 날짜를 기반으로 페이지 검색
-        if page:
-            print("디버그 : 페이지 찾았음")
-            if not page.bouldering_clear_color:
-                page.bouldering_clear_color = []
-                print("디버그 : 리스트로 초기화함.")
-            if instance.video_color not in page.bouldering_clear_color:
-                page.bouldering_clear_color.append(instance.video_color)
-                print("디버그 : 색깔 추가함.")
-                print("")
-            page.save()
 
 class VideoClip(models.Model):
     video_clip_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # UUID 필드

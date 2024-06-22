@@ -106,30 +106,6 @@ class VideoViewSet(viewsets.ModelViewSet):
     # 비디오 직접 확인하는 방법 : http://127.0.0.1:8000/media/videofiles/240526-01.mp4
     # 클립 직접 확인하는 방법 : http://127.0.0.1:8000/media/clips/240526-01_7_15.mp4
 
-    def create(self, request, *args, **kwargs):
-        video_file = request.FILES.get('videofile')
-        page_id = request.data.get('page_id')
-        video_color = request.data.get('video_color')
-
-        if not video_file:
-            return Response({'error': 'No video file provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not page_id:
-            return Response({'error': 'No page ID provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Page 객체 가져오기
-        try:
-            page = Page.objects.get(id=page_id)
-        except Page.DoesNotExist:
-            return Response({'error': 'Invalid page ID'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Video 객체 생성
-        video = Video.objects.create(
-            videofile=video_file,
-            page_id=page,
-            video_color=video_color
-        )
-        return Response({'message': 'Video uploaded successfully', 'video_id': video.id}, status=status.HTTP_201_CREATED)
 
 
     @action(detail=True, methods=['post'])
