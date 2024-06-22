@@ -77,11 +77,14 @@ def detect_pose(video):
                     success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                     success_checkpoints.append(success_checkpoint)
                     is_started = False  # 다음 게임을 위해 대기 상태로 전환
+                    
 
             # bottom_hold를 지나가면 is_started를 False로 변경
                 if ( y3 <= left_foot_y <= y4) or \
                     (y3 <= right_foot_y <= y4):
                         is_started = False
+                        failure_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                        failure_checkpoints.append(failure_checkpoint)
 
     cap.release()
 
