@@ -16,6 +16,7 @@ def detect_pose(video):
     failure_checkpoints = []
 
     is_started = False
+    skip_frames = 0
 
     try:
         latest_first_image = FirstImage.objects.latest('created_at')
@@ -46,6 +47,10 @@ def detect_pose(video):
             if not success:
                 break
 
+            if skip_frames > 0:
+                skip_frames -= 1
+                continue
+
             # MediaPipe 포즈 탐지 수행
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(frame)
@@ -62,7 +67,6 @@ def detect_pose(video):
                     continue
                 
                 # bottom_hold에 처음 지나가면 is_started를 True로 변경
-
                 if not is_started and (
                     (y3 <= left_foot_y <= y4) or
                     (y3 <= right_foot_y <= y4)
@@ -70,6 +74,7 @@ def detect_pose(video):
                     is_started = True
                     start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                     start_checkpoints.append(start_checkpoint)
+                    skip_frames = 60  # 60프레임 건너뛰기
 
                 # is_started가 True일 때만 실패/성공 체크
                 if is_started:
@@ -79,6 +84,7 @@ def detect_pose(video):
                         success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         success_checkpoints.append(success_checkpoint)
                         is_started = False  # 다음 게임을 위해 대기 상태로 전환
+                        skip_frames = 60  # 60프레임 건너뛰기
 
                     # bottom_hold를 지나가면 is_started를 False로 변경
                     if (y3 <= left_foot_y <= y4) or \
@@ -86,9 +92,10 @@ def detect_pose(video):
                         is_started = False
                         failure_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         failure_checkpoints.append(failure_checkpoint)
+                        skip_frames = 60  # 60프레임 건너뛰기
 
     cap.release()
-    #test
+
     # 시작점 체크포인트 저장
     for timestamp in start_checkpoints:
         Checkpoint.objects.create(
