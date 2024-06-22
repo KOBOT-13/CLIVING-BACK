@@ -183,19 +183,19 @@ class FirstImage(models.Model):
         
         Hold.objects.bulk_create(holds)
         
-        self.update_bottom_hold()
-            
-    def update_bottom_hold(self):
-        if Hold.objects.exists():
-            Hold.objects.update(is_bottom=False)
-            
-            bottom_hold = Hold.objects.order_by('y2').last()
-            
+        self.update_bottom_hold(frame_instance)
+
+    def update_bottom_hold(self, frame_instance):
+        if Hold.objects.filter(first_image=self, frame=frame_instance).exists():
+            Hold.objects.filter(first_image=self, frame=frame_instance).update(is_bottom=False)
+
+            bottom_hold = Hold.objects.filter(first_image=self, frame=frame_instance).order_by('y2').last()
+
             if bottom_hold:
                 bottom_hold.is_bottom = True
                 bottom_hold.save()
                 print(bottom_hold)
-
+                
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     is_bottom = models.BooleanField(default=False, verbose_name="bottom")
