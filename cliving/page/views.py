@@ -156,7 +156,7 @@ class VideoViewSet(viewsets.ModelViewSet):
                 start_checkpoint = checkpoint
             elif checkpoint.type in [1, 2] and start_checkpoint:
                 start_time_sec = time_to_seconds(start_checkpoint.time)
-                end_time_sec = time_to_seconds(checkpoint.time)
+                end_time_sec = time_to_seconds(checkpoint.time) + 3
                 mid_time_sec = (start_time_sec + end_time_sec) / 2 - start_time_sec  # 중간 시간 계산
 
                 output_dir = 'media/clips'
