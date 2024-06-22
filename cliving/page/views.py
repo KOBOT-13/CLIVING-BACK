@@ -187,7 +187,7 @@ class VideoViewSet(viewsets.ModelViewSet):
                 start_checkpoint = checkpoint
             elif checkpoint.type in [1, 2] and start_checkpoint:
                 start_time_sec = time_to_seconds(start_checkpoint.time)
-                end_time_sec = time_to_seconds(checkpoint.time)
+                end_time_sec = time_to_seconds(checkpoint.time) + 3
                 mid_time_sec = (start_time_sec + end_time_sec) / 2 - start_time_sec  # 중간 시간 계산
 
                 output_dir = 'media/clips'
@@ -271,6 +271,20 @@ class VideoClipPathsView(APIView):
         paths = [clip['output_path'] for clip in serializer.data]
         return Response(paths)
 
+class VideoClipColorsView(APIView):
+    def get(self, request, page_id):
+        clips = VideoClip.objects.filter(page_id=page_id)
+        serializer = VideoClipThumbnailSerializer(clips, many=True)
+        color = [clip['clip_color'] for clip in serializer.data]
+        return Response(color)
+
+class VideoClipTypesView(APIView):
+    def get(self, request, page_id):
+        clips = VideoClip.objects.filter(page_id=page_id)
+        serializer = VideoClipThumbnailSerializer(clips, many=True)
+        type = [clip['type'] for clip in serializer.data]
+        return Response(type)
+
 class VideoFileView(APIView):
     def get(self, request, custom_id):
         video = get_object_or_404(Video, custom_id=custom_id)
@@ -289,10 +303,25 @@ class FrameViewSet(viewsets.ModelViewSet):
 class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
     serializer_class = HoldSerializer
+    def first_image_and_index_number(self, request, first_image=None, index_number=None):
+        try:
+            hold = Hold.objects.get(first_image_id=first_image, index_number=index_number)
+            serializer = HoldSerializer(hold)
+            return Response(serializer.data)
+        except Hold.DoesNotExist:
+            return Response({'error': 'Not found'}, status=404)
 
 class FirstImageView(viewsets.ModelViewSet):
     queryset = FirstImage.objects.all()
     serializer_class = FirstImageCRUDSerializer
+    
+    def first_image_id(self, request, first_image=None):
+        try:
+            holds = Hold.objects.filter(first_image_id=first_image)
+            frames = [hold.frame for hold in holds]
+            return Response({'frames': frames})
+        except Hold.DoesNotExist:
+            return Response({'error': 'Hold not found'}, status=404)
 
 class ImageUploadView(APIView):
     serializer_class = FirstImageSerializer

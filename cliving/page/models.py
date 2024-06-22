@@ -69,7 +69,7 @@ class Video(models.Model):
     custom_id = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
     #비디오 키입니다. 형식 ex)240622-01
     page_id = models.ForeignKey(Page, related_name="video", null=True, on_delete=models.CASCADE)
-    video_color = models.CharField(max_length=10, choices=COLOR_CHOICES, null=True, blank=True, verbose_name="Color of the hold")
+    video_color = models.CharField(max_length=12, choices=COLOR_CHOICES, null=True, blank=True, verbose_name="Color of the hold")
     videofile = models.FileField(upload_to='videofiles/')
     end_time = models.DateTimeField(null=True, blank=True, editable=True, verbose_name="Recording End Time")
     start_time = models.DateTimeField(verbose_name="Recording Start Time", null=True, blank=True)
@@ -92,20 +92,20 @@ class Checkpoint(models.Model):
     type = models.IntegerField(choices=TYPE_CHOICES)
 
 class Frame(models.Model):
-    date = models.CharField(max_length=10, primary_key=True, editable=False, unique=True)
+    date = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
     image = models.ImageField(upload_to='Frame/')
 
     
 class FirstImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
-    IMG_date = models.CharField(max_length=10, editable=False, unique=True)
+    IMG_date = models.CharField(max_length=12, editable=False, unique=True)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.IMG_date:
-            self.IMG_date = datetime.now().strftime('%y%m%d%H%M')
+            self.IMG_date = datetime.now().strftime('%y%m%d%H%M%S')
             
         super().save(*args, **kwargs)
 
@@ -113,9 +113,10 @@ class FirstImage(models.Model):
         
         frame_instance = Frame.objects.create(image=self.image,date=self.IMG_date)
         
+        holds = []
         for index, detection in enumerate(detections, start=1): 
             box = detection['box']
-            Hold.objects.create(
+            hold = Hold(
                 first_image=self,
                 x1=box[0][0],
                 y1=box[0][1],
@@ -124,7 +125,23 @@ class FirstImage(models.Model):
                 frame=frame_instance,
                 index_number=index
             )
+            holds.append(hold)
+        
+        Hold.objects.bulk_create(holds)
+        
+        self.update_bottom_hold(frame_instance)
 
+    def update_bottom_hold(self, frame_instance):
+        if Hold.objects.filter(first_image=self, frame=frame_instance).exists():
+            Hold.objects.filter(first_image=self, frame=frame_instance).update(is_bottom=False)
+
+            bottom_hold = Hold.objects.filter(first_image=self, frame=frame_instance).order_by('y2').last()
+
+            if bottom_hold:
+                bottom_hold.is_bottom = True
+                bottom_hold.save()
+                print(bottom_hold)
+                
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     is_bottom = models.BooleanField(default=False, verbose_name="bottom")

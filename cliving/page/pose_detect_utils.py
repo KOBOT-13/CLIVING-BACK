@@ -16,6 +16,8 @@ def detect_pose(video):
     failure_checkpoints = []
 
     is_started = False
+    is_success = False
+    skip_frames = 0
 
     try:
         latest_first_image = FirstImage.objects.latest('created_at')
@@ -29,60 +31,77 @@ def detect_pose(video):
         x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4
         print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
     else:
-        x1, x2, y1, y2 = top_hold.x1, top_hold.x2, top_hold.y1, top_hold.y2
+        x1, x2, y1, y2 = (top_hold.x1/ 1179, top_hold.x2/ 1179, top_hold.y1/ 2087, top_hold.y2/ 2087)
         print("Top Hold : ", x1,y1,x2,y2)
 
     if not bottom_hold:
         x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2
         print("'custom_error': No bottom hold found for the latest first image. However, we will proceed with the default values x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2.")
     else:
-        x3, x4, y3, y4 = bottom_hold.x1, bottom_hold.x2, bottom_hold.y1, bottom_hold.y2
-        print("Bottom Hold : ", x3,y4,x3,y4)
+        x3, x4, y3, y4 = (bottom_hold.x1/ 1179, bottom_hold.x2/ 1179, bottom_hold.y1/ 2087, bottom_hold.y2/ 2087)
+        print("Bottom Hold : ", x3,y3,x4,y4)
+        y_fail_point1= y3 * 1.1
+        y_fail_point2= y4 * 1.1
+
 
     cap = cv2.VideoCapture(video.videofile.path)
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
         while cap.isOpened():
-            success, image = cap.read()
+            success, frame = cap.read()
             if not success:
                 break
 
-            # MediaPipe 포즈 탐지 수행
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            results = pose.process(image)
+            if skip_frames > 0:
+                skip_frames -= 1
+                continue
 
-            # 두 개의 Y축 선 그리기
-            # height, width, _ = image.shape
-            # cv2.line(image, (0, int(height * 0.3)), (width, int(height * 0.3)), (0, 255, 0), 2)
-            # cv2.line(image, (0, int(height * 0.7)), (width, int(height * 0.7)), (0, 0, 255), 2)
+            # MediaPipe 포즈 탐지 수행
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = pose.process(frame)
 
             # 특정 조건 확인
             if results.pose_landmarks:
-                nose_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.NOSE].y
-
-                # 스타팅 포인트 넘으면 is_started를 True로 변경
-                if not is_started and nose_y < 0.3:
+                try:
+                    left_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
+                    right_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
+                    left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
+                    right_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST]
+                except (IndexError, TypeError):
+                    # 발 또는 손목 탐지 실패 시 다음 프레임으로 넘어감
+                    continue
+                
+                # bottom_hold에 처음 지나가면 is_started를 True로 변경
+                if not is_started and (
+                    (y3 <= left_foot_y <= y4) or
+                    (y3 <= right_foot_y <= y4)
+                ):
                     is_started = True
                     start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                     start_checkpoints.append(start_checkpoint)
+                    skip_frames = 60  # 60프레임 건너뛰기
+                    continue
 
                 # is_started가 True일 때만 실패/성공 체크
                 if is_started:
-                    # 특정 y축 밑으로 떨어지면 실패
-                    if nose_y > 0.7:
+                    # 왼손 또는 오른손이 top hold 범위에 닿으면 성공
+                    if (x1 <= left_wrist.x <= x2 and y1 <= left_wrist.y <= y2) or \
+                        (x1 <= right_wrist.x <= x2 and y1 <= right_wrist.y <= y2):  
+                        is_success =True 
+                        # continue
+                    # bottom_hold * 11 범위를 지나가면 is_started를 False로 변경
+                    if (y_fail_point2 <= left_foot_y) or \
+                        (y_fail_point2 <= right_foot_y ):
+                        if(is_success): 
+                            success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                            success_checkpoints.append(success_checkpoint)
+                            is_success = False
+                            is_started = True
+                            continue
+                        is_started = False
                         failure_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         failure_checkpoints.append(failure_checkpoint)
-                        is_started = False  # 다음 게임을 위해 대기 상태로 전환
-
-                    # 왼손 또는 오른손이 특정 좌표 범위에 닿으면 성공
-                    left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
-                    right_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST]
-
-                    if (x1 < left_wrist.x < x2 and y1 < left_wrist.y < y2) or \
-                            (x1 < right_wrist.x < x2 and y1 < right_wrist.y < y2):
-                        success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-                        success_checkpoints.append(success_checkpoint)
-                        is_started = False  # 다음 게임을 위해 대기 상태로 전환
-
+                        skip_frames = 60  # 60프레임 건너뛰기
+                        continue
     cap.release()
 
     # 시작점 체크포인트 저장
@@ -108,19 +127,7 @@ def detect_pose(video):
         )
 
     return {
-        'start_checkpoints' : start_checkpoints,
+        'start_checkpoints': start_checkpoints,
         'success_checkpoints': success_checkpoints,
         'failure_checkpoints': failure_checkpoints
     }
-
-"""
-# 데이터베이스에서 좌표값 가져오기
-Hold = Hold.objects.first()
-if Hold:
-    x1, x2 = Hold.x1, Hold.x2
-    y1, y2 = Hold.y1, Hold.y2
-else:
-    # 좌표값이 없는 경우 기본값 설정
-    x1, x2 = 0.4, 0.6
-    y1, y2 = 0.2, 0.4 
-"""
