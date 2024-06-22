@@ -29,14 +29,14 @@ def detect_pose(video):
         x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4
         print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
     else:
-        x1, x2, y1, y2 = (top_hold.x1/ 2376, top_hold.x2/ 2376, top_hold.y1/ 4224, top_hold.y2/4224)
+        x1, x2, y1, y2 = (top_hold.x1/ 1179, top_hold.x2/ 1179, top_hold.y1/ 2087, top_hold.y2/ 2087)
         print("Top Hold : ", x1,y1,x2,y2)
 
     if not bottom_hold:
         x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2
         print("'custom_error': No bottom hold found for the latest first image. However, we will proceed with the default values x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2.")
     else:
-        x3, x4, y3, y4 = (bottom_hold.x1/ 2376, bottom_hold.x2/ 2376, bottom_hold.y1/ 4224, bottom_hold.y2/ 4224)
+        x3, x4, y3, y4 = (bottom_hold.x1/ 1179, bottom_hold.x2/ 1179, bottom_hold.y1/ 2087, bottom_hold.y2/ 2087)
         print("Bottom Hold : ", x3,y3,x4,y4)
 
     cap = cv2.VideoCapture(video.videofile.path)
