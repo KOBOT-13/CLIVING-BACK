@@ -29,14 +29,14 @@ def detect_pose(video):
         x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4
         print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
     else:
-        x1, x2, y1, y2 = top_hold.x1, top_hold.x2, top_hold.y1, top_hold.y2
+        x1, x2, y1, y2 = (top_hold.x1, top_hold.x2, top_hold.y1, top_hold.y2) / 2376
         print("Top Hold : ", x1,y1,x2,y2)
 
     if not bottom_hold:
         x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2
         print("'custom_error': No bottom hold found for the latest first image. However, we will proceed with the default values x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2.")
     else:
-        x3, x4, y3, y4 = bottom_hold.x1, bottom_hold.x2, bottom_hold.y1, bottom_hold.y2
+        x3, x4, y3, y4 = (bottom_hold.x1, bottom_hold.x2, bottom_hold.y1, bottom_hold.y2) / 4224
         print("Bottom Hold : ", x1,y1,x2,y2)
 
     cap = cv2.VideoCapture(video.videofile.path)
@@ -60,8 +60,9 @@ def detect_pose(video):
                 except (IndexError, TypeError):
                     # 발 또는 손목 탐지 실패 시 다음 프레임으로 넘어감
                     continue
-
+                
                 # bottom_hold에 처음 지나가면 is_started를 True로 변경
+
                 if not is_started and (
                     (y3 <= left_foot_y <= y4) or
                     (y3 <= right_foot_y <= y4)
