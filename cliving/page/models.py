@@ -77,7 +77,6 @@ class Video(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = self._state.adding  # 비디오 객체가 새로 생성되는지 여부 판단
-        # super().save(*args, **kwargs)  # 먼저 모델 저장하여 파일이 시스템에 확실히 쓰여지게 함
 
         if not self.end_time:
             self.end_time = timezone.now()
