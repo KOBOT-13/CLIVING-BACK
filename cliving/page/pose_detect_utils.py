@@ -39,6 +39,9 @@ def detect_pose(video):
     else:
         x3, x4, y3, y4 = (bottom_hold.x1/ 1179, bottom_hold.x2/ 1179, bottom_hold.y1/ 2087, bottom_hold.y2/ 2087)
         print("Bottom Hold : ", x3,y3,x4,y4)
+        y_fail_point1= y3 * 1.1
+        y_fail_point2= y4 * 1.1
+
 
     cap = cv2.VideoCapture(video.videofile.path)
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
@@ -87,8 +90,8 @@ def detect_pose(video):
                         skip_frames = 60  # 60프레임 건너뛰기
 
                     # bottom_hold를 지나가면 is_started를 False로 변경
-                    if (y3 <= left_foot_y <= y4) or \
-                        (y3 <= right_foot_y <= y4):
+                    if (y_fail_point1 <= left_foot_y <= y_fail_point2) or \
+                        (y_fail_point1 <= right_foot_y <= y_fail_point2):
                         is_started = False
                         failure_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         failure_checkpoints.append(failure_checkpoint)
