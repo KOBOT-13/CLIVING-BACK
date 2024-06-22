@@ -79,28 +79,44 @@ class AnnualClimbingTimeView(APIView):
         })
         return Response(serializer.data)
 
+
 class MonthlyColorTriesView(APIView):
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
+        print(current_month)
         monthly_pages = Page.objects.filter(date__startswith=current_month)
+        print(monthly_pages)
 
         color_counter = Counter()
-        for page in monthly_pages:
-            color_counter.update(page.bouldering_clear_color)
 
-        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in color_counter.items()]
+        for page in monthly_pages:
+            if page.bouldering_clear_color and page.bouldering_clear_color_counter:
+                for color, count in zip(page.bouldering_clear_color, page.bouldering_clear_color_counter):
+                    color_counter[color] += count
+
+        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in
+                   color_counter.items()]
+
         return Response(results)
+
+
 class AnnualColorTriesView(APIView):
     def get(self, request):
         current_year = timezone.now().strftime('%y')
         yearly_pages = Page.objects.filter(date__startswith=current_year)
 
         color_counter = Counter()
-        for page in yearly_pages:
-            color_counter.update(page.bouldering_clear_color)
 
-        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in color_counter.items()]
+        for page in yearly_pages:
+            if page.bouldering_clear_color and page.bouldering_clear_color_counter:
+                for color, count in zip(page.bouldering_clear_color, page.bouldering_clear_color_counter):
+                    color_counter[color] += count
+
+        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in
+                   color_counter.items()]
+
         return Response(results)
+
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
