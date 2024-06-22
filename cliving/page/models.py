@@ -140,7 +140,7 @@ class VideoClip(models.Model):
     thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)
 
 
-class Checkpoint(models.Model):
+class Checkpoint(models.Model): 
     video = models.ForeignKey(Video, related_name='checkpoints', on_delete=models.CASCADE)
     time = models.TimeField()
     type = models.IntegerField(choices=TYPE_CHOICES)
@@ -167,9 +167,10 @@ class FirstImage(models.Model):
         
         frame_instance = Frame.objects.create(image=self.image,date=self.IMG_date)
         
+        holds = []
         for index, detection in enumerate(detections, start=1): 
             box = detection['box']
-            Hold.objects.create(
+            hold = Hold(
                 first_image=self,
                 x1=box[0][0],
                 y1=box[0][1],
@@ -178,6 +179,22 @@ class FirstImage(models.Model):
                 frame=frame_instance,
                 index_number=index
             )
+            holds.append(hold)
+        
+        Hold.objects.bulk_create(holds)
+        
+        self.update_bottom_hold()
+            
+    def update_bottom_hold(self):
+        if Hold.objects.exists():
+            Hold.objects.update(is_bottom=False)
+            
+            bottom_hold = Hold.objects.order_by('y2').last()
+            
+            if bottom_hold:
+                bottom_hold.is_bottom = True
+                bottom_hold.save()
+                print(bottom_hold)
 
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
