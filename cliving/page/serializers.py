@@ -1,6 +1,5 @@
 import os
 import json
-
 from rest_framework import serializers
 from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage, VideoClip
 
@@ -14,10 +13,6 @@ class VideoSerializer(serializers.ModelSerializer):
         model = Video
         fields = '__all__'
 
-    def get_clips(self, obj):
-        output_dir = 'media/clips'
-        video_clips = [f"{output_dir}/{clip}" for clip in os.listdir(output_dir) if clip.startswith(f"{obj.id}_")]
-        return video_clips
 
 class VideoClipSerializer(serializers.ModelSerializer):
     class Meta:
