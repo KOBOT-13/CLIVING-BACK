@@ -36,7 +36,6 @@ class AllPagesView(APIView):
         serializer = PageSerializer(pages, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class SpecificMonthClimbingTimeView(APIView): # 특정 달 클라이밍 시간 get (1월 ~12월 반복 불러오기로 사용하면 될 듯 함)
     def get(self, request, year, month):
         # 입력 받은 연월을 YYMM 형태로 포맷팅
@@ -82,13 +81,20 @@ class AnnualClimbingTimeView(APIView):
 class MonthlyColorTriesView(APIView):
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
+        print(current_month)
         monthly_pages = Page.objects.filter(date__startswith=current_month)
+        print(monthly_pages)
 
         color_counter = Counter()
-        for page in monthly_pages:
-            color_counter.update(page.bouldering_clear_color)
 
-        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in color_counter.items()]
+        for page in monthly_pages:
+            if page.bouldering_clear_color and page.bouldering_clear_color_counter:
+                for color, count in zip(page.bouldering_clear_color, page.bouldering_clear_color_counter):
+                    color_counter[color] += count
+
+        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in
+                   color_counter.items()]
+
         return Response(results)
 class AnnualColorTriesView(APIView):
     def get(self, request):
@@ -96,10 +102,15 @@ class AnnualColorTriesView(APIView):
         yearly_pages = Page.objects.filter(date__startswith=current_year)
 
         color_counter = Counter()
-        for page in yearly_pages:
-            color_counter.update(page.bouldering_clear_color)
 
-        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in color_counter.items()]
+        for page in yearly_pages:
+            if page.bouldering_clear_color and page.bouldering_clear_color_counter:
+                for color, count in zip(page.bouldering_clear_color, page.bouldering_clear_color_counter):
+                    color_counter[color] += count
+
+        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in
+                   color_counter.items()]
+
         return Response(results)
 
 class VideoViewSet(viewsets.ModelViewSet):
@@ -145,13 +156,13 @@ class VideoViewSet(viewsets.ModelViewSet):
         page.save(update_fields=['play_time', 'bouldering_clear_color','bouldering_clear_color_counter',\
                   'color_success_counter','color_fail_counter', 'today_start_time', 'today_end_time'])
 
-        date_str = timezone.now().strftime('%y%m%d')
+        date_str = page_id
         count = Video.objects.filter(custom_id__startswith=date_str).count() + 1
         sequence_str = f'{count:02d}'  # 두 자리 숫자 (01, 02, ...)
         custom_id = f'{date_str}-{sequence_str}'
 
         video = Video.objects.create(
-            custom_id = custom_id,
+            custom_id=custom_id,
             videofile=video_file,
             page_id=page,
             video_color=video_color,
