@@ -31,14 +31,14 @@ def detect_pose(video):
         x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4
         print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
     else:
-        x1, x2, y1, y2 = (top_hold.x1/ 1080, top_hold.x2/ 1080, top_hold.y1/ 1920, top_hold.y2/ 1920)
+        x1, x2, y1, y2 = (top_hold.x1/ 3024, top_hold.x2/ 3024, top_hold.y1/ 4032, top_hold.y2/ 4032)
         print("Top Hold : ", x1,y1,x2,y2)
 
     if not bottom_hold:
         x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2
         print("'custom_error': No bottom hold found for the latest first image. However, we will proceed with the default values x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2.")
     else:
-        x3, x4, y3, y4 = (bottom_hold.x1/ 1080, bottom_hold.x2/ 1080, bottom_hold.y1/ 1920, bottom_hold.y2/ 1920)
+        x3, x4, y3, y4 = (bottom_hold.x1/ 3024, bottom_hold.x2/ 3024, bottom_hold.y1/ 4032, bottom_hold.y2/ 4032)
         print("Bottom Hold : ", x3,y3,x4,y4)
         y_fail_point1= y3 * 1.1
         y_fail_point2= y4 * 1.1
