@@ -31,14 +31,14 @@ def detect_pose(video):
         x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4
         print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
     else:
-        x1, x2, y1, y2 = (top_hold.x1/ 1179, top_hold.x2/ 1179, top_hold.y1/ 2087, top_hold.y2/ 2087)
+        x1, x2, y1, y2 = (top_hold.x1/ 3024, top_hold.x2/ 3024, top_hold.y1/ 4032, top_hold.y2/ 4032)
         print("Top Hold : ", x1,y1,x2,y2)
 
     if not bottom_hold:
         x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2
         print("'custom_error': No bottom hold found for the latest first image. However, we will proceed with the default values x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2.")
     else:
-        x3, x4, y3, y4 = (bottom_hold.x1/ 1179, bottom_hold.x2/ 1179, bottom_hold.y1/ 2087, bottom_hold.y2/ 2087)
+        x3, x4, y3, y4 = (bottom_hold.x1/ 3024, bottom_hold.x2/ 3024, bottom_hold.y1/ 4032, bottom_hold.y2/ 4032)
         print("Bottom Hold : ", x3,y3,x4,y4)
         y_fail_point1= y3 * 1.1
         y_fail_point2= y4 * 1.1
@@ -80,14 +80,17 @@ def detect_pose(video):
                     start_checkpoints.append(start_checkpoint)
                     skip_frames = 60  # 60프레임 건너뛰기
                     continue
-
-                # is_started가 True일 때만 실패/성공 체크
-                if is_started:
+                
+                if is_started and not is_success:
                     # 왼손 또는 오른손이 top hold 범위에 닿으면 성공
                     if (x1 <= left_wrist.x <= x2 and y1 <= left_wrist.y <= y2) or \
                         (x1 <= right_wrist.x <= x2 and y1 <= right_wrist.y <= y2):  
                         is_success =True 
-                        # continue
+                        success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                        success_checkpoints.append(success_checkpoint)
+                    
+                # is_started가 True일 때만 실패/성공 체크
+                if is_started:
                     # bottom_hold * 11 범위를 지나가면 is_started를 False로 변경
                     if (y_fail_point2 <= left_foot_y) or \
                         (y_fail_point2 <= right_foot_y ):
