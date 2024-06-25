@@ -118,10 +118,10 @@ class FirstImage(models.Model):
             box = detection['box']
             hold = Hold(
                 first_image=self,
-                y1=box[0][0],
-                x1=box[0][1],
-                y2=box[0][2],
-                x2=box[0][3],
+                y1=box[0][0], # x1
+                x1=box[0][1], # y1
+                y2=box[0][2], # x2
+                x2=box[0][3], # y2
                 frame=frame_instance,
                 index_number=index
             )
@@ -135,7 +135,7 @@ class FirstImage(models.Model):
         if Hold.objects.filter(first_image=self, frame=frame_instance).exists():
             Hold.objects.filter(first_image=self, frame=frame_instance).update(is_bottom=False)
 
-            bottom_hold = Hold.objects.filter(first_image=self, frame=frame_instance).order_by('y2').last()
+            bottom_hold = Hold.objects.filter(first_image=self, frame=frame_instance).order_by('x2').last()
 
             if bottom_hold:
                 bottom_hold.is_bottom = True
@@ -146,7 +146,7 @@ class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     is_bottom = models.BooleanField(default=False, verbose_name="bottom")
     first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
-    y1 = models.FloatField()
+    y1 = models.FloatField() #  [746.5261840820312, 1198.86669921875, 1176.798095703125, 1645.9112548828125]
     y2 = models.FloatField()    
     x1 = models.FloatField()
     x2 = models.FloatField()    
