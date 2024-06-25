@@ -45,6 +45,14 @@ ALTER USER ('유저명') SUPERUSER;
 secrets.json 파일에 설정되어 있는 '데이터베이스 이름', '유저명', '비밀번호'를 보고
 위 명령어를 차례로 SQL Shell 에서 실행합니다.
 
+### postgreSQL이 작동을 멈추었을 경우(Windows)
+```bash
+윈도우 로고 우클릭 > 컴퓨터 관리 > 서비스 및 응용 프로그램 > 서비스 > postgresql-x64-16 을 찾아 우클릭 > 시작
+```
+윈도우 최적화 프로그램 등을 사용했을 때, 콘솔이 꺼지는 듯 합니다.
+꺼지면 python manage.py runserver가 동작하지 않으므로 오류 발생시 잘 켜주도록 합시다.
+
+
 ### 의존성 패키지 설치
 ```bash
 pip install -r requirements.txt
