@@ -49,7 +49,7 @@ def seconds_to_time(seconds):
 
 class Page(models.Model):
     date = models.CharField(max_length=6, primary_key=True, editable=False)
-    date_dateFieldValue = models.DateField(auto_now_add=True, verbose_name="date_dateFieldValue")
+    date_dateFieldValue = models.DateField(null = True, blank = True, verbose_name="date_dateFieldValue")
     climbing_center_name = models.CharField(max_length=20, verbose_name="center_name")
     bouldering_clear_color = ArrayField(models.CharField(max_length=10, choices=COLOR_CHOICES),null=True, blank=True, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
     bouldering_clear_color_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='bcc_counter') #각 색깔 카운팅
@@ -61,6 +61,7 @@ class Page(models.Model):
     def save(self, *args, **kwargs):
         if not self.date:
             self.date = datetime.now().strftime('%y%m%d')  # YYMMDD 형식으로 저장
+            self.date_dateFieldValue = datetime.now().date()
         super(Page, self).save(*args, **kwargs)
     def __str__(self):
         return self.date
