@@ -62,10 +62,15 @@ def detect_pose(video):
             # 특정 조건 확인
             if results.pose_landmarks:
                 try:
+                    wrist_check = 0
                     left_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
                     right_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
                     left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
                     right_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST]
+                    if(wrist_check==0):
+                        print(left_wrist, right_wrist)
+                        wrist_check = 60 
+                        wrist_check-=1
                 except (IndexError, TypeError):
                     # 발 또는 손목 탐지 실패 시 다음 프레임으로 넘어감
                     continue
