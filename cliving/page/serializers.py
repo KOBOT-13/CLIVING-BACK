@@ -34,7 +34,7 @@ class ClimbingTimeSerializer(serializers.Serializer):
         total_seconds = obj.get('total_climbing_time', 0)
         hours, remainder = divmod(total_seconds, 3600)
         minutes, _ = divmod(remainder, 60)
-        return f"{int(hours):02}시간 {int(minutes):02}분"
+        return f"{int(hours)}시간 {int(minutes)}분"
 
 class ColorTriesSerializer(serializers.Serializer):
     color = serializers.CharField()
