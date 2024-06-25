@@ -118,10 +118,10 @@ class FirstImage(models.Model):
             box = detection['box']
             hold = Hold(
                 first_image=self,
-                y1=box[0][0],
-                x1=box[0][1],
-                y2=box[0][2],
-                x2=box[0][3],
+                x1=box[0][0],
+                y1=box[0][1],
+                x2=box[0][2],
+                y2=box[0][3],
                 frame=frame_instance,
                 index_number=index
             )
@@ -146,6 +146,8 @@ class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     is_bottom = models.BooleanField(default=False, verbose_name="bottom")
     first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
+    x1 = models.FloatField()
+    x2 = models.FloatField()    
     y1 = models.FloatField()
     y2 = models.FloatField()    
     frame = models.ForeignKey(Frame, related_name="holds", on_delete=models.CASCADE)
