@@ -29,10 +29,10 @@ class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
 class AllPagesView(APIView):
-    def get(self, request, year, month):
-        # 'date' 필드가 YYMMDD 형식이므로 year와 month를 기반으로 필터링
-        specific_month = f'{year}{month:02d}'
-        pages = Page.objects.filter(date__startswith=specific_month)
+    def get(self, request, year):
+        # 'date' 필드가 YYMMDD 형식이므로 year를 기반으로 필터링
+        specific_year = f'{year}'
+        pages = Page.objects.filter(date__startswith=specific_year)
         serializer = PageSerializer(pages, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

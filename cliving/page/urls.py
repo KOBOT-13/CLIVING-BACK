@@ -27,7 +27,7 @@ urlpatterns = [
         path('statistics/monthly/color-tries/', MonthlyColorTriesView.as_view(), name='monthly-color-tries'),
         path('statistics/annual/color-tries/', AnnualColorTriesView.as_view(), name='annual-color-tries'),
         path('video/<str:custom_id>/file/', VideoFileView.as_view(), name='video-file'),
-        path('pages/<int:year>/<int:month>/', AllPagesView.as_view(), name='all-pages-list'),
+        path('pages/<int:year>/', AllPagesView.as_view(), name='all-pages-list'),
         path('videoclips/by_page/', VideoClipViewSet.as_view({'get': 'by_page'})),
         path('upload/image/', ImageUploadView.as_view(), name='image-upload'),
         path('videoclips/by_page/thumbnails/<str:page_id>/', VideoClipThumbnailsView.as_view()),  # 썸네일 뷰 엔드포인트 추가
