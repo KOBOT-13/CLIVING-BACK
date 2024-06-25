@@ -118,10 +118,10 @@ class FirstImage(models.Model):
             box = detection['box']
             hold = Hold(
                 first_image=self,
-                x1=box[0][0],
-                y1=box[0][1],
-                x2=box[0][2],
-                y2=box[0][3],
+                y1=box[0][0],
+                x1=box[0][1],
+                y2=box[0][2],
+                x2=box[0][3],
                 frame=frame_instance,
                 index_number=index
             )
