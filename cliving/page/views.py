@@ -15,6 +15,7 @@ from .pose_detect_utils import detect_pose
 from django.db.models import Sum, Count, F
 from datetime import *
 from django.utils import timezone
+import datetime
 import os
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
@@ -153,7 +154,8 @@ class VideoViewSet(viewsets.ModelViewSet):
         video_file = request.FILES.get('videofile')
         page_id = request.data.get('page_id')
         video_color = request.data.get('video_color')
-        end_time = timezone.now() + timedelta(hours=9)
+        # end_time = timezone.now()
+        end_time = datetime.datetime.now()
         with VideoFileClip(video_file.temporary_file_path()) as video:
             duration = int(video.duration)  # 비디오 길이 계산
             start_time = end_time - timedelta(seconds=duration)  # 시작 시간 계산
