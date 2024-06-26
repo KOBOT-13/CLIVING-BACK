@@ -61,7 +61,14 @@ class Page(models.Model):
     def save(self, *args, **kwargs):
         if not self.date:
             self.date = datetime.now().strftime('%y%m%d')  # YYMMDD 형식으로 저장
+            # date 필드가 YYMMDD 형식이라고 가정
+        extracted_date = datetime.strptime(self.date, '%y%m%d').date()
+        self.date_dateFieldValue = extracted_date
+        print(extracted_date)
+        print(self.date_dateFieldValue)
+
         super(Page, self).save(*args, **kwargs)
+        Page.objects.filter(pk=self.pk).update(date_dateFieldValue=extracted_date)
     def __str__(self):
         return self.date
 
