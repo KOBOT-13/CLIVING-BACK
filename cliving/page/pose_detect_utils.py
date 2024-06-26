@@ -31,22 +31,18 @@ def detect_pose(video):
         x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4
         print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
     else:
-        y1, y2, x1, x2 = (top_hold.x1, top_hold.x2, top_hold.y1, top_hold.y2)
-        print("Top Hold : ", x1,y1,x2,y2)
-        y1, y2, x1, x2 = (top_hold.x1/ 3024, top_hold.x2/ 3024, top_hold.y1/ 4032, top_hold.y2/ 4032)
+        x1, x2, y1, y2 = (top_hold.x1/ 3024, top_hold.x2/ 3024, top_hold.y1/ 4032, top_hold.y2/ 4032)
         print("Top Hold : ", x1,y1,x2,y2)
 
     if not bottom_hold:
-        y3, y4, x3, x4 = 0.1, 0.2, 0.1, 0.2
+        x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2
         print("'custom_error': No bottom hold found for the latest first image. However, we will proceed with the default values x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2.")
     else:
-        y3, y4, x3, x4 = (bottom_hold.x1, bottom_hold.x2, bottom_hold.y1, bottom_hold.y2)
-        print("Bottom Hold : ", x3,y3,x4,y4)
-        y3, y4, x3, x4 = (bottom_hold.x1/ 3024, bottom_hold.x2/ 3024, bottom_hold.y1/ 4032, bottom_hold.y2/ 4032)
+        x3, x4, y3, y4 = (bottom_hold.x1/ 3024, bottom_hold.x2/ 3024, bottom_hold.y1/ 4032, bottom_hold.y2/ 4032)
         print("Bottom Hold : ", x3,y3,x4,y4)
         y_fail_point1= y3 * 1.1
         y_fail_point2= y4 * 1.1
-
+    wrist_check = 0
 
     cap = cv2.VideoCapture(video.videofile.path)
     with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
@@ -66,10 +62,16 @@ def detect_pose(video):
             # 특정 조건 확인
             if results.pose_landmarks:
                 try:
+                    
                     left_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
                     right_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
                     left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
                     right_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST]
+                    
+                    if(wrist_check==0):
+                        print(left_wrist, right_wrist)
+                        wrist_check = 60 
+                    wrist_check-=1   
                 except (IndexError, TypeError):
                     # 발 또는 손목 탐지 실패 시 다음 프레임으로 넘어감
                     continue
