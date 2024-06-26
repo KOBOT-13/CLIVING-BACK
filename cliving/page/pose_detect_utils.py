@@ -129,7 +129,7 @@ def detect_pose(video):
                     skip_frames = 60  # 60프레임 건너뛰기
                     continue
     cap.release()
-
+    video_duration = video.duration
     # 시작점 체크포인트 저장
     for timestamp in start_checkpoints:
         Checkpoint.objects.create(
@@ -139,6 +139,9 @@ def detect_pose(video):
         )
 
     for timestamp in success_checkpoints:
+        adjusted_time = timestamp + 2
+        if adjusted_time > video_duration:
+            adjusted_time = video_duration
         Checkpoint.objects.create(
             video=video,
             time=datetime.utcfromtimestamp(timestamp).time(),
@@ -146,6 +149,9 @@ def detect_pose(video):
         )
 
     for timestamp in failure_checkpoints:
+        adjusted_time = timestamp + 2
+        if adjusted_time > video_duration:
+            adjusted_time = video_duration
         Checkpoint.objects.create(
             video=video,
             time=datetime.utcfromtimestamp(timestamp).time(),
