@@ -70,25 +70,25 @@ def detect_pose(video):
 
             try:
                 left_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
-            except (IndexError, TypeError):
+            except (IndexError, TypeError, AttributeError):
         # 왼쪽 발 탐지 실패 시 None으로 설정
                 left_foot_y = None
 
             try:
                 right_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
-            except (IndexError, TypeError):
+            except (IndexError, TypeError, AttributeError):
         # 오른쪽 발 탐지 실패 시 None으로 설정
                 right_foot_y = None
 
             try:
                 left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
-            except (IndexError, TypeError):
+            except (IndexError, TypeError, AttributeError):
         # 왼쪽 손목 탐지 실패 시 None으로 설정
                 left_wrist = None
 
             try:
                 right_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST]
-            except (IndexError, TypeError):
+            except (IndexError, TypeError, AttributeError):
         # 오른쪽 손목 탐지 실패 시 None으로 설정
                 right_wrist = None
 
