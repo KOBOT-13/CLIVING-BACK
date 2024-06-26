@@ -8,7 +8,6 @@ from .models import Checkpoint, Video, FirstImage, Hold
 
 
 def detect_pose(video):
-    mp_drawing = mp.solutions.drawing_utils
     mp_pose = mp.solutions.pose
 
     start_checkpoints = []
