@@ -119,7 +119,7 @@ def detect_pose(video):
                         success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         success_checkpoints.append(success_checkpoint)
                         is_success = False
-                        is_started = True
+                        is_started = False
                         skip_frames = 30
                         continue
                         
