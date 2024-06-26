@@ -15,6 +15,7 @@ from .pose_detect_utils import detect_pose
 from django.db.models import Sum, Count, F
 from datetime import *
 from django.utils import timezone
+import datetime
 import os
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
@@ -28,14 +29,42 @@ def time_to_seconds(time_obj):
 class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
+
+    # def create(self, request, *args, **kwargs):
+    #     climbing_center_name = request.data.get('climbing_center_name')
+    #     bouldering_clear_color = request.data.get('bouldering_clear_color')
+    #     bouldering_clear_color_counter = []
+    #     color_success_counter = []
+    #     color_fail_counter = []
+    #
+    #     if bouldering_clear_color not in self.bouldering_clear_color:
+    #         self.bouldering_clear_color.append(video_color)
+    #         page.bouldering_clear_color_counter.append(0)
+    #         page.color_success_counter.append(0)
+    #         page.color_fail_counter.append(0)
+    #         this_color_index = page.bouldering_clear_color.index(video_color)
+    #
+    #
+    #     page = Page.objects.create(
+    #         climbing_center_name=climbing_center_name,
+    #         bouldering_clear_color=bouldering_clear_color,
+    #         bouldering_clear_color_counter=bouldering_clear_color_counter,
+    #         color_success_counter=color_success_counter,
+    #         color_fail_counter=color_fail_counter,
+    #         today_start_time=None,
+    #         today_end_time=None,
+    #         play_time=None,
+    #     )
+    #
+    #     return Response({'message': 'Page uploaded successfully'}, status=status.HTTP_201_CREATED)
+
 class AllPagesView(APIView):
-    def get(self, request, year, month):
-        # 'date' 필드가 YYMMDD 형식이므로 year와 month를 기반으로 필터링
-        specific_month = f'{year}{month:02d}'
-        pages = Page.objects.filter(date__startswith=specific_month)
+    def get(self, request, year):
+        # 'date' 필드가 YYMMDD 형식이므로 year를 기반으로 필터링
+        specific_year = f'{year}'
+        pages = Page.objects.filter(date__startswith=specific_year)
         serializer = PageSerializer(pages, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 class SpecificMonthClimbingTimeView(APIView): # 특정 달 클라이밍 시간 get (1월 ~12월 반복 불러오기로 사용하면 될 듯 함)
     def get(self, request, year, month):
@@ -82,13 +111,20 @@ class AnnualClimbingTimeView(APIView):
 class MonthlyColorTriesView(APIView):
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
+        print(current_month)
         monthly_pages = Page.objects.filter(date__startswith=current_month)
+        print(monthly_pages)
 
         color_counter = Counter()
-        for page in monthly_pages:
-            color_counter.update(page.bouldering_clear_color)
 
-        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in color_counter.items()]
+        for page in monthly_pages:
+            if page.bouldering_clear_color and page.bouldering_clear_color_counter:
+                for color, count in zip(page.bouldering_clear_color, page.bouldering_clear_color_counter):
+                    color_counter[color] += count
+
+        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in
+                   color_counter.items()]
+
         return Response(results)
 class AnnualColorTriesView(APIView):
     def get(self, request):
@@ -96,10 +132,15 @@ class AnnualColorTriesView(APIView):
         yearly_pages = Page.objects.filter(date__startswith=current_year)
 
         color_counter = Counter()
-        for page in yearly_pages:
-            color_counter.update(page.bouldering_clear_color)
 
-        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in color_counter.items()]
+        for page in yearly_pages:
+            if page.bouldering_clear_color and page.bouldering_clear_color_counter:
+                for color, count in zip(page.bouldering_clear_color, page.bouldering_clear_color_counter):
+                    color_counter[color] += count
+
+        results = [ColorTriesSerializer({'color': color, 'tries': count}).data for color, count in
+                   color_counter.items()]
+
         return Response(results)
 
 class VideoViewSet(viewsets.ModelViewSet):
@@ -113,7 +154,8 @@ class VideoViewSet(viewsets.ModelViewSet):
         video_file = request.FILES.get('videofile')
         page_id = request.data.get('page_id')
         video_color = request.data.get('video_color')
-        end_time = timezone.now()
+        # end_time = timezone.now()
+        end_time = datetime.datetime.now()
         with VideoFileClip(video_file.temporary_file_path()) as video:
             duration = int(video.duration)  # 비디오 길이 계산
             start_time = end_time - timedelta(seconds=duration)  # 시작 시간 계산
@@ -145,13 +187,13 @@ class VideoViewSet(viewsets.ModelViewSet):
         page.save(update_fields=['play_time', 'bouldering_clear_color','bouldering_clear_color_counter',\
                   'color_success_counter','color_fail_counter', 'today_start_time', 'today_end_time'])
 
-        date_str = timezone.now().strftime('%y%m%d')
+        date_str = page_id
         count = Video.objects.filter(custom_id__startswith=date_str).count() + 1
         sequence_str = f'{count:02d}'  # 두 자리 숫자 (01, 02, ...)
         custom_id = f'{date_str}-{sequence_str}'
 
         video = Video.objects.create(
-            custom_id = custom_id,
+            custom_id=custom_id,
             videofile=video_file,
             page_id=page,
             video_color=video_color,
@@ -160,7 +202,7 @@ class VideoViewSet(viewsets.ModelViewSet):
             duration=duration
         )
 
-        return Response({'message': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Video uploaded successfully', 'custom_id': custom_id}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def create_checkpoint(self, request, pk=None):
@@ -187,7 +229,7 @@ class VideoViewSet(viewsets.ModelViewSet):
                 start_checkpoint = checkpoint
             elif checkpoint.type in [1, 2] and start_checkpoint:
                 start_time_sec = time_to_seconds(start_checkpoint.time)
-                end_time_sec = time_to_seconds(checkpoint.time) + 3
+                end_time_sec = time_to_seconds(checkpoint.time)
                 mid_time_sec = (start_time_sec + end_time_sec) / 2 - start_time_sec  # 중간 시간 계산
 
                 output_dir = 'media/clips'

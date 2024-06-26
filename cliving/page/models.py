@@ -53,15 +53,20 @@ class Page(models.Model):
     climbing_center_name = models.CharField(max_length=20, verbose_name="center_name")
     bouldering_clear_color = ArrayField(models.CharField(max_length=10, choices=COLOR_CHOICES),null=True, blank=True, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
     bouldering_clear_color_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='bcc_counter') #각 색깔 카운팅
-    color_success_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='bcc_counter')
-    color_fail_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='bcc_counter')
+    color_success_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='success_counter')
+    color_fail_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='fail_counter')
     today_start_time = models.TimeField(blank=True, null=True, verbose_name="start")  #암장에서 첫번째 영상을 시작한 시간
     today_end_time = models.TimeField(blank=True, null=True, verbose_name="end")  #암장에서 마지막 영상을 끝낸 시간(암장에서 있던 시간을 기록)
     play_time = models.IntegerField(help_text="climbing total play time in seconds", null=True, blank=True)  #영상 촬영 시간
     def save(self, *args, **kwargs):
         if not self.date:
             self.date = datetime.now().strftime('%y%m%d')  # YYMMDD 형식으로 저장
+            # date 필드가 YYMMDD 형식이라고 가정
+        extracted_date = datetime.strptime(self.date, '%y%m%d').date()
+        self.date_dateFieldValue = extracted_date
         super(Page, self).save(*args, **kwargs)
+        Page.objects.filter(pk=self.pk).update(date_dateFieldValue=extracted_date)
+        #auto_now_add는 모델을 save할 때마다 동작함.(구체적으로는 바로 윗줄에 있는 .save를 할 때마다 인듯.) 따라서 update 할 때는 동작 안함.
     def __str__(self):
         return self.date
 
@@ -118,10 +123,10 @@ class FirstImage(models.Model):
             box = detection['box']
             hold = Hold(
                 first_image=self,
-                x1=box[0][0],
-                y1=box[0][1],
-                x2=box[0][2],
-                y2=box[0][3],
+                y1=box[0][0], # x1
+                x1=box[0][1], # y1
+                y2=box[0][2], # x2
+                x2=box[0][3], # y2
                 frame=frame_instance,
                 index_number=index
             )
@@ -146,9 +151,9 @@ class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     is_bottom = models.BooleanField(default=False, verbose_name="bottom")
     first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
-    x1 = models.FloatField()
-    x2 = models.FloatField()
-    y1 = models.FloatField()
+    y1 = models.FloatField() #  [746.5261840820312, 1198.86669921875, 1176.798095703125, 1645.9112548828125]
     y2 = models.FloatField()    
+    x1 = models.FloatField()
+    x2 = models.FloatField()    
     frame = models.ForeignKey(Frame, related_name="holds", on_delete=models.CASCADE)
     index_number = models.PositiveIntegerField(default=0)
