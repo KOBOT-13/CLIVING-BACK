@@ -64,9 +64,6 @@ class Page(models.Model):
             # date 필드가 YYMMDD 형식이라고 가정
         extracted_date = datetime.strptime(self.date, '%y%m%d').date()
         self.date_dateFieldValue = extracted_date
-        print(extracted_date)
-        print(self.date_dateFieldValue)
-
         super(Page, self).save(*args, **kwargs)
         Page.objects.filter(pk=self.pk).update(date_dateFieldValue=extracted_date)
         #auto_now_add는 모델을 save할 때마다 동작함.(구체적으로는 바로 윗줄에 있는 .save를 할 때마다 인듯.) 따라서 update 할 때는 동작 안함.
