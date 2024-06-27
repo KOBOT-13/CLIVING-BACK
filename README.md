@@ -1,3 +1,5 @@
+![image](https://github.com/KOBOT-13/CLIVING-BACK/assets/51287968/bd84eb91-349f-4755-8180-6ecee95c6fb8)
+
 # CLIVING Setup 문서
 ## 요구사항
 ```bash
