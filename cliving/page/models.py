@@ -145,7 +145,6 @@ class FirstImage(models.Model):
             if bottom_hold:
                 bottom_hold.is_bottom = True
                 bottom_hold.save()
-                print(bottom_hold)
                 
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
