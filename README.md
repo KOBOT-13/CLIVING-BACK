@@ -1,3 +1,7 @@
+<div align=center>
+    <img src="Logo.png" alt="App Logo" width="300"/>
+</div>
+
 # CLIVING Setup 문서
 ## 요구사항
 ```bash
