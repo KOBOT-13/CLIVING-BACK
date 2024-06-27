@@ -1,6 +1,7 @@
 <div align=center>
-![image](https://github.com/KOBOT-13/CLIVING-BACK/assets/51287968/bd84eb91-349f-4755-8180-6ecee95c6fb8)
+    <img src="assets/images/Logo.png" alt="App Logo" width="300"/>
 </div>
+
 # CLIVING Setup 문서
 ## 요구사항
 ```bash
