@@ -40,7 +40,6 @@ class Command(BaseCommand):
                 color_fail_counter = [0]
 
                 if(date_str == '240412'):
-                    print('240412')
                     bouldering_clear_color = ['black', 'pink']
                     bouldering_clear_color_counter = [8, 11]
                     start_time = datetime.strptime('09:15:11', '%H:%M:%S').time()
@@ -48,7 +47,6 @@ class Command(BaseCommand):
                     play_time = 5000
 
                 elif (date_str == '240419'):
-                    print('240419')
                     bouldering_clear_color = ['orange', 'blue']
                     bouldering_clear_color_counter = [7, 10]
                     start_time = datetime.strptime('11:05:11', '%H:%M:%S').time()
@@ -56,7 +54,6 @@ class Command(BaseCommand):
                     play_time = 5000
 
                 elif (date_str == '240505'):
-                    print('240505')
                     bouldering_clear_color = ['green', 'yellow']
                     bouldering_clear_color_counter = [6, 7]
                     start_time = datetime.strptime('14:59:11', '%H:%M:%S').time()
@@ -64,7 +61,6 @@ class Command(BaseCommand):
                     play_time = 5000
 
                 else:
-                    print('etc')
                     bouldering_clear_color = [rand_colors.pop()]
                     bouldering_clear_color_counter = [10]
                     start_time = datetime.strptime('14:59:11', '%H:%M:%S').time()

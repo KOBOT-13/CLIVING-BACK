@@ -30,34 +30,6 @@ class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
 
-    # def create(self, request, *args, **kwargs):
-    #     climbing_center_name = request.data.get('climbing_center_name')
-    #     bouldering_clear_color = request.data.get('bouldering_clear_color')
-    #     bouldering_clear_color_counter = []
-    #     color_success_counter = []
-    #     color_fail_counter = []
-    #
-    #     if bouldering_clear_color not in self.bouldering_clear_color:
-    #         self.bouldering_clear_color.append(video_color)
-    #         page.bouldering_clear_color_counter.append(0)
-    #         page.color_success_counter.append(0)
-    #         page.color_fail_counter.append(0)
-    #         this_color_index = page.bouldering_clear_color.index(video_color)
-    #
-    #
-    #     page = Page.objects.create(
-    #         climbing_center_name=climbing_center_name,
-    #         bouldering_clear_color=bouldering_clear_color,
-    #         bouldering_clear_color_counter=bouldering_clear_color_counter,
-    #         color_success_counter=color_success_counter,
-    #         color_fail_counter=color_fail_counter,
-    #         today_start_time=None,
-    #         today_end_time=None,
-    #         play_time=None,
-    #     )
-    #
-    #     return Response({'message': 'Page uploaded successfully'}, status=status.HTTP_201_CREATED)
-
 class AllPagesView(APIView):
     def get(self, request, year):
         # 'date' 필드가 YYMMDD 형식이므로 year를 기반으로 필터링
@@ -111,9 +83,7 @@ class AnnualClimbingTimeView(APIView):
 class MonthlyColorTriesView(APIView):
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
-        print(current_month)
         monthly_pages = Page.objects.filter(date__startswith=current_month)
-        print(monthly_pages)
 
         color_counter = Counter()
 
@@ -146,9 +116,6 @@ class AnnualColorTriesView(APIView):
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    # 클립 생성 요청하는 방법 : (POST)http://127.0.0.1:8000/v1/video/<custom_id>/create_clip/
-    # 비디오 직접 확인하는 방법 : http://127.0.0.1:8000/media/videofiles/240526-01.mp4
-    # 클립 직접 확인하는 방법 : http://127.0.0.1:8000/media/clips/240526-01_7_15.mp4
 
     def create(self, request, *args, **kwargs):
         video_file = request.FILES.get('videofile')

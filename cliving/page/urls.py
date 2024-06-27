@@ -30,12 +30,11 @@ urlpatterns = [
         path('pages/<int:year>/', AllPagesView.as_view(), name='all-pages-list'),
         path('videoclips/by_page/', VideoClipViewSet.as_view({'get': 'by_page'})),
         path('upload/image/', ImageUploadView.as_view(), name='image-upload'),
-        path('videoclips/by_page/thumbnails/<str:page_id>/', VideoClipThumbnailsView.as_view()),  # 썸네일 뷰 엔드포인트 추가
-        path('videoclips/by_page/paths/<str:page_id>/', VideoClipPathsView.as_view()),  # 영상 경로 뷰 엔드포인트 추가
-        # path('set-bottom-hold/', set_bottom_hold, name='set-bottom-hold'),
+        path('videoclips/by_page/thumbnails/<str:page_id>/', VideoClipThumbnailsView.as_view()),
+        path('videoclips/by_page/paths/<str:page_id>/', VideoClipPathsView.as_view()),
         path('hold/<int:first_image>/<int:index_number>/', HoldViewSet.as_view({'get': 'first_image_and_index_number', 'put': 'put'})),
-        path('videoclips/by_page/colors/<str:page_id>/', VideoClipColorsView.as_view()),  # 썸네일 뷰 엔드포인트 추가
-        path('videoclips/by_page/types/<str:page_id>/', VideoClipTypesView.as_view()),  # 썸네일 뷰 엔드포인트 추가    ])),
+        path('videoclips/by_page/colors/<str:page_id>/', VideoClipColorsView.as_view()),
+        path('videoclips/by_page/types/<str:page_id>/', VideoClipTypesView.as_view()),
         path('firstimage/<int:first_image>/', FirstImageView.as_view({'get': 'first_image_id'})),
     ])),
 ]

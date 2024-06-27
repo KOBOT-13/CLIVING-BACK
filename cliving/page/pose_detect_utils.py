@@ -97,7 +97,6 @@ def detect_pose(video):
                 start_checkpoints.append(start_checkpoint)
                 skip_frames = 60  # 60프레임 건너뛰기
                 continue
-            # 성공 탐지~ 
 
             if is_started and not is_success and (
                 (left_wrist is not None and x1 <= 1-left_wrist.x <= x2 and y1 <= left_wrist.y <= y2) or 
