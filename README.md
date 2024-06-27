@@ -1,5 +1,5 @@
 <div align=center>
-    <img src="assets/images/Logo.png" alt="App Logo" width="300"/>
+    <img src="Logo.png" alt="App Logo" width="300"/>
 </div>
 
 # CLIVING Setup 문서
