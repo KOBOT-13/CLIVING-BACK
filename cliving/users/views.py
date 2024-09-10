@@ -43,13 +43,13 @@ class RegisterView(generics.CreateAPIView):
         email_address = EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=False)
 
         # 이메일 인증 링크를 보내는 함수 호출
-        self.send_email_confirmation(user, email_address)
-
-    def send_email_confirmation(self, user, email_address):
-        request = self.request  # 현재 요청 객체를 사용합니다.
-
-        # 이메일 인증 메일 전송
-        send_email_confirmation(request, user)
+    #     self.send_email_confirmation(user, email_address)
+    #
+    # def send_email_confirmation(self, user, email_address):
+    #     request = self.request  # 현재 요청 객체를 사용합니다.
+    #
+    #     # 이메일 인증 메일 전송
+    #     send_email_confirmation(request, user)
 
 
 class CheckUsernameView(APIView):
