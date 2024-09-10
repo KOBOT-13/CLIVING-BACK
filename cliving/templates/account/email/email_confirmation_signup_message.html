@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이메일 인증 요청</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffffff;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #000000;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007AFF;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .button:hover {
+            background-color: #005bbd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>이메일 인증 요청</h1>
+        <p>안녕하세요 {{ user.username }}님!</p>
+        <p>이메일 주소를 확인하려면 아래 링크를 클릭하세요</p>
+        <p>
+            <a href="{{ activate_url }}" class="button" style="color: #ffffff;">이메일 인증하기</a>
+        </p>
+        <p>감사합니다!</p>
+    </div>
+</body>
+</html>

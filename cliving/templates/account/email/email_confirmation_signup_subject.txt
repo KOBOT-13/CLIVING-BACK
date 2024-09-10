@@ -1,0 +1,1 @@
+{{ current_site.domain }} 회원가입 인증 이메일
