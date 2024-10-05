@@ -40,7 +40,14 @@ def detect_pose(video):
         "y1": top_hold.y1 / 4032 if top_hold else default_top["y1"],
         "y2": top_hold.y2 / 4032 if top_hold else default_top["y2"],
     }
-
+    # 그리고 비교 연산에서 문자열로 사용하지 않도록 변수로 할당
+    x1 = top_values["x1"]
+    x2 = top_values["x2"]
+    y1 = top_values["y1"]
+    y2 = top_values["y2"]
+    y3 = bottom_values["y1"]
+    y4 = bottom_values["y2"]
+    y_fail_point2 = bottom_values["y2"] * 1.1
     bottom_values = {
         "x1": bottom_hold.x1 / 3024 if bottom_hold else default_bottom["x1"],
         "x2": bottom_hold.x2 / 3024 if bottom_hold else default_bottom["x2"],
