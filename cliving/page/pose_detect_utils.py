@@ -18,33 +18,59 @@ def detect_pose(video):
     is_success = False
     skip_frames = 0
 
-    try:
-        latest_first_image = FirstImage.objects.latest('created_at')
-    except FirstImage.DoesNotExist:
-        return {'error': 'No FirstImage found'}
 
+    try:
+        latest_first_image = FirstImage.objects.latest("created_at")
+    except FirstImage.DoesNotExist:
+        return {"error": "No FirstImage found"}
+
+    # 기본값 설정
+    default_top = {"x1": 0.4, "x2": 0.6, "y1": 0.2, "y2": 0.4}
+    default_bottom = {"x1": 0.1, "x2": 0.2, "y1": 0.1, "y2": 0.2}
+
+    # Hold 객체에서 값을 가져오거나 기본값으로 설정
     top_hold = Hold.objects.filter(first_image=latest_first_image, is_top=True).first()
-    bottom_hold = Hold.objects.filter(first_image=latest_first_image, is_bottom=True).first()
+    bottom_hold = Hold.objects.filter(
+        first_image=latest_first_image, is_bottom=True
+    ).first()
+
+    top_values = {
+        "x1": top_hold.x1 / 3024 if top_hold else default_top["x1"],
+        "x2": top_hold.x2 / 3024 if top_hold else default_top["x2"],
+        "y1": top_hold.y1 / 4032 if top_hold else default_top["y1"],
+        "y2": top_hold.y2 / 4032 if top_hold else default_top["y2"],
+    }
+
+    bottom_values = {
+        "x1": bottom_hold.x1 / 3024 if bottom_hold else default_bottom["x1"],
+        "x2": bottom_hold.x2 / 3024 if bottom_hold else default_bottom["x2"],
+        "y1": bottom_hold.y1 / 4032 if bottom_hold else default_bottom["y1"],
+        "y2": bottom_hold.y2 / 4032 if bottom_hold else default_bottom["y2"],
+    }
 
     if not top_hold:
-        x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4
-        print("'custom_error': No top hold found for the latest first image. However, we will proceed with the default values x1, x2, y1, y2 = 0.4, 0.6, 0.2, 0.4.")
-    else:
-        x1, x2, y1, y2 = (top_hold.x1/ 3024, top_hold.x2/ 3024, top_hold.y1/ 4032, top_hold.y2/ 4032)
+        print(
+            "'custom_error': No top hold found for the latest first image. Using default values: ",
+            top_values,
+        )
 
     if not bottom_hold:
-        y3, y4, x3, x4 = 0.1, 0.2, 0.1, 0.2
-        print("'custom_error': No bottom hold found for the latest first image. However, we will proceed with the default values x3, x4, y3, y4 = 0.1, 0.2, 0.1, 0.2.")
-    else:
-        x3, x4, y3, y4 = (bottom_hold.x1/ 3024, bottom_hold.x2/ 3024, bottom_hold.y1/ 4032, bottom_hold.y2/ 4032)
-        y_fail_point2= y4 * 1.05
-        if y_fail_point2 > 1 :
-            y_fail_point2 = y4
+        print(
+            "'custom_error': No bottom hold found for the latest first image. Using default values: ",
+            bottom_values,
+        )
 
+    # y_fail_point2 값이 1을 초과할 때 y4 값으로 설정
+    if "y_fail_point2" in locals() and y_fail_point2 > 1:
+        y_fail_point2 = bottom_values["y2"]
 
     cap = cv2.VideoCapture(video.videofile.path)
-    with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+    with mp_pose.Pose(
+        min_detection_confidence=0.5, min_tracking_confidence=0.5
+    ) as pose:
         while cap.isOpened():
+            fps = cap.get(cv2.CAP_PROP_FPS)  # fps 구하기
+            # 스킵 포인트 정적인 시간이 아닌 발을 기준으로 움직인 시간만큼 옮기기
             success, frame = cap.read()
             if not success:
                 break
@@ -64,33 +90,41 @@ def detect_pose(video):
                 right_wrist = None
 
             try:
-                left_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y
+                left_foot_y = results.pose_landmarks.landmark[
+                    mp_pose.PoseLandmark.LEFT_FOOT_INDEX
+                ].y
             except (IndexError, TypeError, AttributeError):
-        # 왼쪽 발 탐지 실패 시 None으로 설정
+                # 왼쪽 발 탐지 실패 시 None으로 설정
                 left_foot_y = None
 
             try:
-                right_foot_y = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y
+                right_foot_y = results.pose_landmarks.landmark[
+                    mp_pose.PoseLandmark.RIGHT_FOOT_INDEX
+                ].y
             except (IndexError, TypeError, AttributeError):
-        # 오른쪽 발 탐지 실패 시 None으로 설정
+                # 오른쪽 발 탐지 실패 시 None으로 설정
                 right_foot_y = None
 
             try:
-                left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
+                left_wrist = results.pose_landmarks.landmark[
+                    mp_pose.PoseLandmark.LEFT_WRIST
+                ]
             except (IndexError, TypeError, AttributeError):
-        # 왼쪽 손목 탐지 실패 시 None으로 설정
+                # 왼쪽 손목 탐지 실패 시 None으로 설정
                 left_wrist = None
 
             try:
-                right_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_WRIST]
+                right_wrist = results.pose_landmarks.landmark[
+                    mp_pose.PoseLandmark.RIGHT_WRIST
+                ]
             except (IndexError, TypeError, AttributeError):
-        # 오른쪽 손목 탐지 실패 시 None으로 설정
+                # 오른쪽 손목 탐지 실패 시 None으로 설정
                 right_wrist = None
 
-    # bottom_hold에 처음 지나가면 is_started를 True로 변경
+            # bottom_hold에 처음 지나가면 is_started를 True로 변경
             if not is_started and (
-                (left_foot_y is not None and y3 <= left_foot_y <= y4) or
-                (right_foot_y is not None and y3 <= right_foot_y <= y4)
+                (left_foot_y is not None and y3 <= left_foot_y <= y4)
+                or (right_foot_y is not None and y3 <= right_foot_y <= y4)
             ):
                 is_started = True
                 start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
@@ -98,18 +132,31 @@ def detect_pose(video):
                 skip_frames = 60  # 60프레임 건너뛰기
                 continue
 
-            if is_started and not is_success and (
-                (left_wrist is not None and x1 <= 1-left_wrist.x <= x2 and y1 <= left_wrist.y <= y2) or 
-                (right_wrist is not None and x1 <= 1-right_wrist.x <= x2 and y1 <= right_wrist.y <= y2)
+            if (
+                is_started
+                and not is_success
+                and (
+                    (
+                        left_wrist is not None
+                        and x1 <= 1 - left_wrist.x <= x2
+                        and y1 <= left_wrist.y <= y2
+                    )
+                    or (
+                        right_wrist is not None
+                        and x1 <= 1 - right_wrist.x <= x2
+                        and y1 <= right_wrist.y <= y2
+                    )
+                )
             ):
                 is_success = True
                 skip_frames = 30
 
-    # is_started가 True일 때만 실패/성공 체크
+            # is_started가 True일 때만 실패/성공 체크
             if is_started:
-        # bottom_hold * 1.1 범위를 지나가면 is_started를 False로 변경
-                if (left_foot_y is not None and y_fail_point2 <= left_foot_y) or \
-                    (right_foot_y is not None and y_fail_point2 <= right_foot_y):
+                # bottom_hold * 1.1 범위를 지나가면 is_started를 False로 변경
+                if (left_foot_y is not None and y_fail_point2 <= left_foot_y) or (
+                    right_foot_y is not None and y_fail_point2 <= right_foot_y
+                ):
                     if is_success:
                         success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         success_checkpoints.append(success_checkpoint)
@@ -117,7 +164,7 @@ def detect_pose(video):
                         is_started = False
                         skip_frames = 30
                         continue
-                        
+
                     is_started = False
                     failure_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                     failure_checkpoints.append(failure_checkpoint)
@@ -130,7 +177,7 @@ def detect_pose(video):
         Checkpoint.objects.create(
             video=video,
             time=datetime.utcfromtimestamp(timestamp).time(),
-            type=0  # 시작점 체크포인트
+            type=0,  # 시작점 체크포인트
         )
 
     for timestamp in success_checkpoints:
@@ -140,7 +187,7 @@ def detect_pose(video):
         Checkpoint.objects.create(
             video=video,
             time=datetime.utcfromtimestamp(timestamp).time(),
-            type=1  # 성공 체크포인트
+            type=1,  # 성공 체크포인트
         )
 
     for timestamp in failure_checkpoints:
@@ -150,11 +197,11 @@ def detect_pose(video):
         Checkpoint.objects.create(
             video=video,
             time=datetime.utcfromtimestamp(timestamp).time(),
-            type=2  # 실패 체크포인트
+            type=2,  # 실패 체크포인트
         )
 
     return {
-        'start_checkpoints': start_checkpoints,
-        'success_checkpoints': success_checkpoints,
-        'failure_checkpoints': failure_checkpoints
+        "start_checkpoints": start_checkpoints,
+        "success_checkpoints": success_checkpoints,
+        "failure_checkpoints": failure_checkpoints,
     }
