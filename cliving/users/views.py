@@ -178,7 +178,6 @@ class ProfileView(APIView):
         return Response({
             'username': user.username,
             'nickname' : user.nickname,
-            'birth_date': user.birth_date,
             'profile_image': profile_image,
         })
 
