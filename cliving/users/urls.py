@@ -15,6 +15,7 @@ urlpatterns = [
     path('auth/logout/', CustomLogoutView.as_view(), name='custom-logout'),
 
     path('auth/', include('dj_rest_auth.urls')),
+    path('profile/', ProfileView.as_view(), name='profile'),
     path('profile/update/', ProfileUpdateView.as_view(), name='profile-update'),
     path('delete_account/', DeleteAccountView.as_view(), name='delete-account'),
 ]

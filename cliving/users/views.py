@@ -140,50 +140,49 @@ class CustomLogoutView(APIView):
         except Exception as e:
             return Response({"detail": f"로그아웃 실패: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            user.delete()
+            return Response({"detail": "회원 탈퇴가 완료되었습니다."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": f"회원 탈퇴 중 오류가 발생했습니다: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfileUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
+    permission_classes = [IsAuthenticated]
+    queryset = CustomUser.objects.all()
+    serializer_class = ProfileUpdateSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_object(self):
+        return self.request.user
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        profile_image = user.profile_image.url if user.profile_image else None
+        return Response({
+            'username': user.username,
+            'nickname' : user.nickname,
+            'birth_date': user.birth_date,
+            'profile_image': profile_image,
+        })
+
 #
-# class DeleteAccountView(APIView):
-#     permission_classes = [IsAuthenticated]
-#
-#     def delete(self, request, *args, **kwargs):
-#         user = request.user
-#         try:
-#             user.delete()
-#             return Response({"detail": "회원 탈퇴가 완료되었습니다."}, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             return Response({"detail": f"회원 탈퇴 중 오류가 발생했습니다: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-#
-#
-# class ProfileUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
-#     queryset = CustomUser.objects.all()
-#     serializer_class = ProfileUpdateSerializer
-#     permission_classes = [IsAuthenticated]
-#     parser_classes = [MultiPartParser, FormParser, JSONParser]
-#
-#     def get_object(self):
-#         return self.request.user
-#
-#     def put(self, request, *args, **kwargs):
-#         return self.update(request, *args, **kwargs)
-#
-#     def patch(self, request, *args, **kwargs):
-#         return self.partial_update(request, *args, **kwargs)
-#
-#
-# class ProfileView(APIView):
-#     permission_classes = [IsAuthenticated]
-#
-#     def get(self, request):
-#         user = request.user
-#         profile_image = user.profile_image.url if user.profile_image else None
-#         return Response({
-#             'id': user.id,
-#             'username': user.username,
-#             'is_staff': user.is_staff,
-#             'birth_date': user.birth_date,
-#             'profile_image': profile_image,
-#         })
-#
-# #
 # class PasswordResetRequestView(APIView):
 #     def post(self, request):
 #         email = request.data.get('email')
