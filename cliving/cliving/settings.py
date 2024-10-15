@@ -63,11 +63,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_yasg',
     'rest_framework.authtoken',
-    'allauth',
-    'allauth.account',
     'dj_rest_auth',
-    'rest_framework_simplejwt.token_blacklist',
     'dj_rest_auth.registration',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
 ]
 
@@ -82,30 +80,8 @@ REST_AUTH = {
     'SESSION_LOGIN' : False
 }
 
-# ACCOUNT_AUTHENTICATION_METHOD = 'email'
-# ACCOUNT_EMAIL_REQUIRED = True
-# ACCOUNT_EMAIL_VERIFICATION = 'mandatory' # 필요하게 설정할꺼면 나중에 mandatory 로 바꾸면 됨.
-# ACCOUNT_UNIQUE_EMAIL = True
-# ACCOUNT_USERNAME_REQUIRED = True
-# ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = True
-# ACCOUNT_ADAPTER = 'users.adapter.CustomAccountAdapter'
-#
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = get_secret("EMAIL_HOST_USER")
-# EMAIL_HOST_PASSWORD = get_secret("EMAIL_HOST_PASSWORD")
-# DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-# ACCOUNT_EMAIL_CONFIRMATION_TEMPLATE = 'templates/account/email/email_confirmation_signup_message.html'  # 사용자 정의 템플릿 경로
-# ACCOUNT_EMAIL_CONFIRMATION_HTML_TEMPLATE = 'account/email/email_confirmation_signup_message.html'  # 사용자 정의 템플릿 경로
-# ACCOUNT_RATE_LIMITS = { # 이메일 인증 재전송에 대한 속도 제한 설정
-#     'confirm_email': '5/m'
-# }
-
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 AUTH_USER_MODEL = 'users.CustomUser'
@@ -115,16 +91,13 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
@@ -149,13 +122,13 @@ CORS_ALLOW_HEADERS = (
     'origin',
     'user-agent',
     'x-csrftoken',
-    'x-requestes-with',
+    'x-requested-with',
 )
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
 CSRF_COOKIE_HTTPONLY = False
 
-ROOT_URLCONF = 'cliving.urls'
+ROOT_URLCONF = 'cliving.urls' #최상위 urls.py 위치
 
 TEMPLATES = [
     {
@@ -200,16 +173,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', # 사용자의 비밀번호가 사용자명, 이름, 이메일 주소 등의 사용자 속성과 너무 비슷한지 여부를 확인
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', # 비밀번호의 최소 길이를 검증합니다. 기본값은 8자로
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', # 사용자가 너무 자주 사용하는 일반적인 비밀번호인지 확인합니다. Django는 흔히 사용되는 비밀번호 리스트를 포함하고 있으며, 그 목록에 있는 비밀번호는 사용할 수 없도록 합니다
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',# 비밀번호가 숫자로만 구성되었는지를 확인합니다. 비밀번호가 숫자로만 이루어져 있으면 안전하지 않다고 간주하므로 거부됩니다
     },
 ]
 

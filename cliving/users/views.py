@@ -1,25 +1,20 @@
+import random
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from allauth.account.views import ConfirmEmailView
-from allauth.account.models import EmailConfirmationHMAC
-from allauth.account.models import EmailAddress
 from rest_framework import status, mixins
 from dj_rest_auth.views import LoginView
 from django.contrib.auth import authenticate, login
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import views as auth_views
-from cliving.settings import *
 # from users.adapter import CustomAccountAdapter
 from rest_framework import generics
 from django.utils.http import urlsafe_base64_decode
 from .models import CustomUser
 from .serializers import CustomUserSerializer, ProfileUpdateSerializer
-from allauth.account.utils import send_email_confirmation
 from django.contrib.auth import authenticate, login, get_user_model
 from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth.tokens import default_token_generator
@@ -33,122 +28,104 @@ import re
 User = get_user_model()
 
 
+def send_sms(phone_number, verification_code):
+    print(f"Sending SMS to {phone_number}: 인증번호는 {verification_code}입니다.")
+    # Twilio API OR KAKAO API
+
+
+class SendPhoneVerificationCodeView(APIView):
+    def post(self, request, *args, **kwargs):
+        phone_number = request.data.get('phone_number')
+        verification_code = random.randint(100000, 999999)
+
+        # 인증번호를 세션에 저장
+        request.session['verification_code'] = verification_code
+        request.session['phone_number'] = phone_number
+
+        send_sms(phone_number, verification_code)
+
+        return Response({"detail": "인증번호가 발송되었습니다."}, status=status.HTTP_200_OK)
+
+
+class VerifyPhoneCodeView(APIView):
+    def post(self, request, *args, **kwargs):
+        input_code = request.data.get('verification_code')
+        session_code = request.session.get('verification_code')
+        phone_number = request.session.get('phone_number')
+
+        if not session_code or input_code != str(session_code):
+            return Response({"detail": "인증번호가 잘못되었습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.session['is_verified'] = True
+        del request.session['verification_code']  # 인증번호 제거
+
+        return Response({"detail": "휴대폰 인증이 완료되었습니다.", "phone_number": phone_number}, status=status.HTTP_200_OK)
+
+
 class RegisterView(generics.CreateAPIView):
     serializer_class = CustomUserSerializer
 
     def perform_create(self, serializer):
-        user = serializer.save()  # 사용자를 저장합니다.
+        phone_number = self.request.session.get('phone_number')
+        is_verified_in_session = self.request.session.get('is_verified')
 
-        # 이메일 주소를 가져옵니다.
-        email_address = EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=False)
+        # 세션에서 인증 여부 확인
+        if not is_verified_in_session:
+            return Response({"detail": "휴대폰 인증을 완료하세요."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 이메일 인증 링크를 보내는 함수 호출
-    #     self.send_email_confirmation(user, email_address)
-    #
-    # def send_email_confirmation(self, user, email_address):
-    #     request = self.request  # 현재 요청 객체를 사용합니다.
-    #
-    #     # 이메일 인증 메일 전송
-    #     send_email_confirmation(request, user)
+        # 회원가입 진행, 인증된 사용자로 저장
+        user = serializer.save(phone_number=phone_number)
+        user.is_verified = True
+        user.save()
+
+        return Response({"detail": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
 
 
 class CheckUsernameView(APIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         if User.objects.filter(username=username).exists():
+            return Response({"detail": "이미 존재하는 ID입니다."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "사용 가능한 ID입니다."}, status=status.HTTP_200_OK)
+
+
+class CheckNicknameView(APIView):
+    def post(self, request, *args, **kwargs):
+        nickname = request.data.get('nickname')
+        if User.objects.filter(nickname=nickname).exists():
             return Response({"detail": "이미 존재하는 닉네임입니다."}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"detail": "사용 가능한 닉네임입니다."}, status=status.HTTP_200_OK)
 
 
-class CheckEmailView(APIView):
+class CheckPhoneNumberView(APIView):
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email')
-        if User.objects.filter(email=email).exists():
-            return Response({"detail": "이미 존재하는 이메일 주소입니다."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"detail": "사용 가능한 이메일 주소입니다."}, status=status.HTTP_200_OK)
+        phone_number = request.data.get('phone_number')
+        if User.objects.filter(phone_number=phone_number).exists():
+            return Response({"detail": "이미 존재하는 휴대폰 번호입니다."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "사용 가능한 휴대폰 번호입니다."}, status=status.HTTP_200_OK)
 
 
-class CustomConfirmEmailView(ConfirmEmailView):
-    template_name = 'account/email/success_verify_email.html'
-
-    def get_template_names(self) -> list[str]:
-        return super().get_template_names()
-
-    def dispatch(self, request, *args, **kwargs):
-        key = kwargs.get('key', None)
-        print(f'dispatch called with key: {key}')
-        if key:
-            email_confirmation = EmailConfirmationHMAC.from_key(key)
-            if email_confirmation:
-                email_address = email_confirmation.email_address
-                print(f'EmailConfirmation found: {email_confirmation}')
-
-                # 여기서 이메일 인증을 완료
-                email_confirmation.confirm(request)
-
-                # 다시 한 번 확인
-                email_address.refresh_from_db()
-
-                if email_address and email_address.verified:
-                    user = email_address.user
-                    user.is_verified = True
-                    user.save()
-                    print(f'User {user.email} verified and saved')
-                else:
-                    print(f'EmailAddress not verified or not found: {email_address.email if email_address else "None"}')
-            else:
-                print(f'EmailConfirmation not found for key: {key}')
-
-        return super().dispatch(request, *args, **kwargs)
-
-
-class CustomLoginView(LoginView):
+class CustomLoginView(APIView):
     def post(self, request, *args, **kwargs):
-        print('custom login view call')
+        username = request.data.get('username')
+        password = request.data.get('password')
 
-        # 요청에서 email과 password 가져오기
-        email = request.data.get('email')  # 이메일 필드
-        password = request.data.get('password')  # 비밀번호 필드
-        print(email)
-        print(password)
-
-        # 이메일로 사용자 인증
-        user = authenticate(request, username=email, password=password)
+        # 사용자명과 비밀번호로 사용자 인증
+        user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # 이메일 주소로 사용자 가져오기
-            email_address = EmailAddress.objects.filter(email=email, primary=True).first()
-            # if email_address and not email_address.verified:
-            #     # 이메일 주소가 인증되지 않은 경우
-            #     adapter = CustomAccountAdapter()
-            #     adapter.send_email_confirmation(request, user)  # 인증 이메일 재전송
-            #     return Response(
-            #         {"detail": "이메일 인증이 필요합니다. 인증 이메일이 재전송되었습니다."},
-            #         status=status.HTTP_401_UNAUTHORIZED
-            #     )
-            #
-            # # 이메일 인증이 완료된 경우 로그인
-            login(request, user)
-            return super().post(request, *args, **kwargs)
+            # 토큰 발행
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+
+            return Response({
+                "detail": "로그인 성공",
+                "refresh": str(refresh),
+                "access": access_token,
+                "username": user.username
+            }, status=status.HTTP_200_OK)
         else:
-            # 로그인 실패 시 처리
-            if not EmailAddress.objects.filter(email=email).exists():
-                return Response(
-                    {"detail": "등록된 이메일 주소가 아닙니다."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            user = User.objects.filter(email=email).first()
-            if user and not user.check_password(password):
-                return Response(
-                    {"detail": "비밀번호가 잘못되었습니다."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            return Response(
-                {"detail": "이메일 주소 또는 비밀번호가 잘못되었습니다."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"detail": "아이디 또는 비밀번호가 잘못되었습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomLogoutView(APIView):
@@ -163,60 +140,87 @@ class CustomLogoutView(APIView):
         except Exception as e:
             return Response({"detail": f"로그아웃 실패: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-class ProfileView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        profile_image = user.profile_image.url if user.profile_image else None
-        return Response({
-            'id': user.id,
-            'email': user.email,
-            'username': user.username,
-            'is_staff': user.is_staff,
-            'birth_date': user.birth_date,
-            'profile_image': profile_image,
-        })
-
-
-class PasswordResetRequestView(APIView):
-    def post(self, request):
-        email = request.data.get('email')
-        if not email:
-            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
-
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        request.session['password_reset_token'] = token
-        current_site = get_current_site(request)
-        domain = request.get_host()
-        protocol = 'https' if request.is_secure() else 'http'
-
-        # 비밀번호 재설정 링크를 먼저 생성
-        reset_link = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
-        reset_url = f'{protocol}://{domain}{reset_link}'
-
-        mail_subject = '[CLIVING] 비밀번호 재설정 이메일'
-        message = render_to_string('account/email/password_reset_email.html', {
-            'user': user,
-            'reset_url': reset_url,
-        })
-        send_mail(
-            mail_subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False,
-            html_message=message
-        )
-
-        return Response({'success': '비밀번호 재설정 이메일이 전송되었습니다.'}, status=status.HTTP_200_OK)
-
+#
+# class DeleteAccountView(APIView):
+#     permission_classes = [IsAuthenticated]
+#
+#     def delete(self, request, *args, **kwargs):
+#         user = request.user
+#         try:
+#             user.delete()
+#             return Response({"detail": "회원 탈퇴가 완료되었습니다."}, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({"detail": f"회원 탈퇴 중 오류가 발생했습니다: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+#
+#
+# class ProfileUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
+#     queryset = CustomUser.objects.all()
+#     serializer_class = ProfileUpdateSerializer
+#     permission_classes = [IsAuthenticated]
+#     parser_classes = [MultiPartParser, FormParser, JSONParser]
+#
+#     def get_object(self):
+#         return self.request.user
+#
+#     def put(self, request, *args, **kwargs):
+#         return self.update(request, *args, **kwargs)
+#
+#     def patch(self, request, *args, **kwargs):
+#         return self.partial_update(request, *args, **kwargs)
+#
+#
+# class ProfileView(APIView):
+#     permission_classes = [IsAuthenticated]
+#
+#     def get(self, request):
+#         user = request.user
+#         profile_image = user.profile_image.url if user.profile_image else None
+#         return Response({
+#             'id': user.id,
+#             'username': user.username,
+#             'is_staff': user.is_staff,
+#             'birth_date': user.birth_date,
+#             'profile_image': profile_image,
+#         })
+#
+# #
+# class PasswordResetRequestView(APIView):
+#     def post(self, request):
+#         email = request.data.get('email')
+#         if not email:
+#             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             user = User.objects.get(email=email)
+#         except User.DoesNotExist:
+#             return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
+#
+#         token = default_token_generator.make_token(user)
+#         uid = urlsafe_base64_encode(force_bytes(user.pk))
+#         request.session['password_reset_token'] = token
+#         current_site = get_current_site(request)
+#         domain = request.get_host()
+#         protocol = 'https' if request.is_secure() else 'http'
+#
+#         # 비밀번호 재설정 링크를 먼저 생성
+#         reset_link = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+#         reset_url = f'{protocol}://{domain}{reset_link}'
+#
+#         mail_subject = '[CLIVING] 비밀번호 재설정 이메일'
+#         message = render_to_string('account/email/password_reset_email.html', {
+#             'user': user,
+#             'reset_url': reset_url,
+#         })
+#         send_mail(
+#             mail_subject,
+#             message,
+#             settings.DEFAULT_FROM_EMAIL,
+#             [email],
+#             fail_silently=False,
+#             html_message=message
+#         )
+#
+#         return Response({'success': '비밀번호 재설정 이메일이 전송되었습니다.'}, status=status.HTTP_200_OK)
+#
 
 class CustomPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     def dispatch(self, request, *args, **kwargs):
@@ -262,29 +266,5 @@ class CustomPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
-class ProfileUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
-    queryset = CustomUser.objects.all()
-    serializer_class = ProfileUpdateSerializer
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser, JSONParser]
-
-    def get_object(self):
-        return self.request.user
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
 
 
-class DeleteAccountView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, *args, **kwargs):
-        user = request.user
-        try:
-            user.delete()
-            return Response({"detail": "회원 탈퇴가 완료되었습니다."}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"detail": f"회원 탈퇴 중 오류가 발생했습니다: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
