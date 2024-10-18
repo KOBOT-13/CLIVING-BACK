@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
+from .models import CustomUser, PhoneVerification
 
+
+@admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ('username', 'phone_number', 'is_staff', 'is_active', 'is_verified', 'profile_image')
@@ -19,4 +21,8 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('username', 'phone_number')
     ordering = ('username',)
 
-admin.site.register(CustomUser, CustomUserAdmin)
+@admin.register(PhoneVerification)
+class PhoneVerificationAdmin(admin.ModelAdmin):
+    list_display = ('phone_number', 'verification_code', 'is_verified', 'created_at')
+    list_filter = ('is_verified',)
+    search_fields = ('phone_number',)

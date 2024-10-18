@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-
+from django.utils.timezone import now
+from datetime import timedelta
 from django.contrib.auth.models import BaseUserManager
 
 
@@ -58,3 +59,18 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def has_module_perms(self, app_label):
         return self.is_superuser
+
+
+class PhoneVerification(models.Model):
+    phone_number = models.CharField(max_length=15)
+    verification_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def is_expired(self):
+        # 인증번호 유효 시간 설정 (예: 5분)
+        return now() > self.created_at + timedelta(minutes=5)
+
+    def __str__(self):
+        return f"{self.phone_number} - {self.verification_code}"
+
