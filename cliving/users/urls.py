@@ -7,15 +7,25 @@ router = DefaultRouter()
 
 urlpatterns = [
     path('', include(router.urls)),
+
+    # Check
     path('check-username/', CheckUsernameView.as_view(), name='check-username'),
+    path('check-nickname/', CheckNicknameView.as_view(), name='check-nickname'),
+    path('check-phone-number/', CheckPhoneNumberView.as_view(), name='check-phone-number'),
+
+    # registration
     path('send-verification-code/', SendPhoneVerificationCodeView.as_view(), name='send_verification_code'),
     path('verify-phone-code/', VerifyPhoneCodeView.as_view(), name='verify_phone_code'),
     path('auth/registration/', RegisterView.as_view(), name='custom-registration'),
+
+    # log in&out
     path('auth/login/', CustomLoginView.as_view(), name='custom_login'),
     path('auth/logout/', CustomLogoutView.as_view(), name='custom-logout'),
 
-    path('auth/', include('dj_rest_auth.urls')),
+    # profile
     path('profile/', ProfileView.as_view(), name='profile'),
     path('profile/update/', ProfileUpdateView.as_view(), name='profile-update'),
+
+    # delete_account
     path('delete_account/', DeleteAccountView.as_view(), name='delete-account'),
 ]

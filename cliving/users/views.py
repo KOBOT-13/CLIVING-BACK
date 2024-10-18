@@ -13,7 +13,7 @@ from django.contrib.auth import views as auth_views
 # from users.adapter import CustomAccountAdapter
 from rest_framework import generics
 from django.utils.http import urlsafe_base64_decode
-from .models import CustomUser
+from .models import CustomUser, PhoneVerification
 from .serializers import CustomUserSerializer, ProfileUpdateSerializer
 from django.contrib.auth import authenticate, login, get_user_model
 from django.utils.http import urlsafe_base64_encode
@@ -34,52 +34,55 @@ def send_sms(phone_number, verification_code):
 
 
 class SendPhoneVerificationCodeView(APIView):
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         phone_number = request.data.get('phone_number')
-        verification_code = random.randint(100000, 999999)
+        verification_code = str(random.randint(100000, 999999))
 
-        # 인증번호를 세션에 저장
-        request.session['verification_code'] = verification_code
-        request.session['phone_number'] = phone_number
+        # 기존 인증 기록 삭제 (같은 번호에 대해)
+        PhoneVerification.objects.filter(phone_number=phone_number).delete()
 
-        send_sms(phone_number, verification_code)
+        # 새로운 인증번호 저장
+        PhoneVerification.objects.create(
+            phone_number=phone_number,
+            verification_code=verification_code
+        )
+
+        # SMS 전송 (여기선 출력)
+        print(f"Sending SMS to {phone_number}: 인증번호는 {verification_code}입니다.")
 
         return Response({"detail": "인증번호가 발송되었습니다."}, status=status.HTTP_200_OK)
 
 
 class VerifyPhoneCodeView(APIView):
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
+        phone_number = request.data.get('phone_number')
         input_code = request.data.get('verification_code')
-        session_code = request.session.get('verification_code')
-        phone_number = request.session.get('phone_number')
 
-        if not session_code or input_code != str(session_code):
-            return Response({"detail": "인증번호가 잘못되었습니다."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            verification = PhoneVerification.objects.get(phone_number=phone_number)
 
-        request.session['is_verified'] = True
-        del request.session['verification_code']  # 인증번호 제거
+            if verification.is_expired():
+                return Response({"detail": "인증번호가 만료되었습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"detail": "휴대폰 인증이 완료되었습니다.", "phone_number": phone_number}, status=status.HTTP_200_OK)
+            if verification.verification_code != input_code:
+                return Response({"detail": "인증번호가 일치하지 않습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 인증 성공 처리
+            verification.is_verified = True
+            verification.save()
+
+            return Response({"detail": "휴대폰 인증 성공!"}, status=status.HTTP_200_OK)
+
+        except PhoneVerification.DoesNotExist:
+            return Response({"detail": "해당 번호에 대한 인증 요청이 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = CustomUserSerializer
 
     def perform_create(self, serializer):
-        phone_number = self.request.session.get('phone_number')
-        is_verified_in_session = self.request.session.get('is_verified')
-
-        # 세션에서 인증 여부 확인
-        if not is_verified_in_session:
-            return Response({"detail": "휴대폰 인증을 완료하세요."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # 회원가입 진행, 인증된 사용자로 저장
-        user = serializer.save(phone_number=phone_number)
-        user.is_verified = True
-        user.save()
-
-        return Response({"detail": "회원가입이 완료되었습니다."}, status=status.HTTP_201_CREATED)
-
+        # 유저 생성 (검증 및 저장은 시리얼라이저가 처리)
+        serializer.save()
 
 class CheckUsernameView(APIView):
     def post(self, request, *args, **kwargs):
@@ -177,7 +180,7 @@ class ProfileView(APIView):
         profile_image = user.profile_image.url if user.profile_image else None
         return Response({
             'username': user.username,
-            'nickname' : user.nickname,
+            'nickname': user.nickname,
             'profile_image': profile_image,
         })
 
