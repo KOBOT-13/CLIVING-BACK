@@ -34,8 +34,12 @@ def get_secret(setting):
         error_msg = "Set the {} environment variable".format(setting)
         raise ImproperlyConfigured(error_msg)
 
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_secret("SECRET_KEY")
+COOLSMS_API_KEY = get_secret("COOLSMS_API_KEY")
+COOLSMS_SECRET_KEY = get_secret("COOLSMS_SECRET_KEY")
+COOLSMS_SENDER_NUMBER = get_secret("COOLSMS_SENDER_NUMBER")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
