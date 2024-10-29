@@ -1,4 +1,5 @@
 import random
+from django.contrib.auth.password_validation import validate_password
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -27,16 +28,36 @@ import re
 
 User = get_user_model()
 
+from sdk.api.message import Message
+from sdk.exceptions import CoolsmsException
+from django.conf import settings
+
 
 def send_sms(phone_number, verification_code):
-    print(f"Sending SMS to {phone_number}: 인증번호는 {verification_code}입니다.")
-    # Twilio API OR KAKAO API
+    api_key = settings.COOLSMS_API_KEY
+    api_secret = settings.COOLSMS_SECRET_KEY
+
+    params = {
+        'type': 'sms',
+        'to': phone_number,
+        'from': settings.COOLSMS_SENDER_NUMBER,  # 발신자 번호
+        'text': f'[인증번호] {verification_code}입니다.'
+    }
+
+    try:
+        cool = Message(api_key, api_secret)
+        response = cool.send(params)
+        print(f"발송 성공: {response}")
+    except CoolsmsException as e:
+        print(f"발송 실패: {e.code}, {e.msg}")
 
 
 class SendPhoneVerificationCodeView(APIView):
     def post(self, request):
         phone_number = request.data.get('phone_number')
         verification_code = str(random.randint(100000, 999999))
+
+        phone_number = phone_number.replace('-', '')
 
         # 기존 인증 기록 삭제 (같은 번호에 대해)
         PhoneVerification.objects.filter(phone_number=phone_number).delete()
@@ -47,8 +68,9 @@ class SendPhoneVerificationCodeView(APIView):
             verification_code=verification_code
         )
 
-        # SMS 전송 (여기선 출력)
+        # send_sms 주석 해제 시, 유료 sms 전송. 건당 20원.
         print(f"Sending SMS to {phone_number}: 인증번호는 {verification_code}입니다.")
+        send_sms(phone_number, verification_code)
 
         return Response({"detail": "인증번호가 발송되었습니다."}, status=status.HTTP_200_OK)
 
@@ -57,6 +79,7 @@ class VerifyPhoneCodeView(APIView):
     def post(self, request):
         phone_number = request.data.get('phone_number')
         input_code = request.data.get('verification_code')
+        phone_number = phone_number.replace('-', '')
 
         try:
             verification = PhoneVerification.objects.get(phone_number=phone_number)
@@ -144,6 +167,33 @@ class CustomLogoutView(APIView):
             return Response({"detail": f"로그아웃 실패: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        # 기존 비밀번호와 새 비밀번호 가져오기
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+
+        # 기존 비밀번호 확인
+        if not user.check_password(current_password):
+            return Response({"detail": "현재 비밀번호가 일치하지 않습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 새 비밀번호 유효성 검증
+        try:
+            validate_password(new_password, user)
+        except Exception as e:
+            return Response({"detail": list(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 비밀번호 변경
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"detail": "비밀번호가 성공적으로 변경되었습니다."}, status=status.HTTP_200_OK)
+
+
 class DeleteAccountView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -183,89 +233,3 @@ class ProfileView(APIView):
             'nickname': user.nickname,
             'profile_image': profile_image,
         })
-
-#
-# class PasswordResetRequestView(APIView):
-#     def post(self, request):
-#         email = request.data.get('email')
-#         if not email:
-#             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-#         try:
-#             user = User.objects.get(email=email)
-#         except User.DoesNotExist:
-#             return Response({'error': 'User with this email does not exist'}, status=status.HTTP_404_NOT_FOUND)
-#
-#         token = default_token_generator.make_token(user)
-#         uid = urlsafe_base64_encode(force_bytes(user.pk))
-#         request.session['password_reset_token'] = token
-#         current_site = get_current_site(request)
-#         domain = request.get_host()
-#         protocol = 'https' if request.is_secure() else 'http'
-#
-#         # 비밀번호 재설정 링크를 먼저 생성
-#         reset_link = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
-#         reset_url = f'{protocol}://{domain}{reset_link}'
-#
-#         mail_subject = '[CLIVING] 비밀번호 재설정 이메일'
-#         message = render_to_string('account/email/password_reset_email.html', {
-#             'user': user,
-#             'reset_url': reset_url,
-#         })
-#         send_mail(
-#             mail_subject,
-#             message,
-#             settings.DEFAULT_FROM_EMAIL,
-#             [email],
-#             fail_silently=False,
-#             html_message=message
-#         )
-#
-#         return Response({'success': '비밀번호 재설정 이메일이 전송되었습니다.'}, status=status.HTTP_200_OK)
-#
-
-class CustomPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
-    def dispatch(self, request, *args, **kwargs):
-        # URL에서 uidb64와 token을 가져오기
-        uidb64 = kwargs.get('uidb64')
-        token = request.session.get('password_reset_token')
-
-        # uidb64를 디코드하여 user ID를 복원
-        try:
-            uid = urlsafe_base64_decode(uidb64).decode()
-            user = User.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            user = None
-
-        # 토큰 유효성 검사
-        if user is not None and default_token_generator.check_token(user, token):
-            # 토큰이 유효하면, user와 token을 설정
-            self.user = user
-            self.token = token
-        else:
-            # 토큰이 유효하지 않으면, 오류 페이지로 리다이렉트
-            return render(request, 'account/email/password_reset_invalid.html')
-
-        # 나머지 dispatch 처리
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        password = form.cleaned_data.get('new_password1')
-        password_regex = re.compile(r'^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,32}$')
-
-        if not password_regex.match(password):
-            form.add_error('new_password1', '비밀번호는 8-32자리여야 하며, 최소 하나의 문자, 숫자 및 특수 문자를 포함해야 합니다.')
-            return self.form_invalid(form)
-
-        form.save()  # 비밀번호 저장
-        print("비밀번호 재설정이 완료되었습니다.")
-        messages.success(self.request, '비밀번호가 성공적으로 재설정되었습니다.')
-        return redirect('/api/users/password_reset/done/')
-
-    def form_invalid(self, form):
-        print("폼이 유효하지 않습니다. 오류:", form.errors)
-        messages.error(self.request, '비밀번호 재설정 중 오류가 발생했습니다. 다시 시도해주세요.')
-        return self.render_to_response(self.get_context_data(form=form))
-
-
-
-
