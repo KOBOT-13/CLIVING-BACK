@@ -32,7 +32,7 @@ urlpatterns = [
         path('upload/image/', ImageUploadView.as_view(), name='image-upload'),
         path('videoclips/by_page/thumbnails/<str:page_id>/', VideoClipThumbnailsView.as_view()),
         path('videoclips/by_page/paths/<str:page_id>/', VideoClipPathsView.as_view()),
-        path('hold/<int:first_image>/<int:index_number>/', HoldViewSet.as_view({'get': 'first_image_and_index_number', 'put': 'put'})),
+        path('hold/<int:first_image>/<int:index_number>/', HoldViewSet.as_view({'get': 'first_image_and_index_number', 'put': 'put', 'put': 'start_hold'})),
         path('videoclips/by_page/colors/<str:page_id>/', VideoClipColorsView.as_view()),
         path('videoclips/by_page/types/<str:page_id>/', VideoClipTypesView.as_view()),
         path('firstimage/<int:first_image>/', FirstImageView.as_view({'get': 'first_image_id'})),

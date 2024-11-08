@@ -147,6 +147,7 @@ class FirstImage(models.Model):
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     is_bottom = models.BooleanField(default=False, verbose_name="bottom")
+    is_start = models.BooleanField(default=False, verbose_name="start")
     first_image = models.ForeignKey(FirstImage, on_delete=models.CASCADE)
     y1 = models.FloatField() #  [746.5261840820312, 1198.86669921875, 1176.798095703125, 1645.9112548828125]
     y2 = models.FloatField()    

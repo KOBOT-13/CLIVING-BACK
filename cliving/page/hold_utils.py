@@ -9,16 +9,17 @@ def perform_object_detection(image_path):
 
     image_np = np.array(Image.open(image_path))
 
-    results = model(image_np)
+    results = model(image_np)   
 
     detected_objects = []
     if len(results) > 0 and len(results[0].boxes) > 0:
         for idx, result in enumerate(results[0].boxes):
-            detected_objects.append({
-                "object_index": idx,
-                "confidence": result.conf.item(),
-                "box": result.xyxy.tolist()
-            })
+            if result.cls == 0 and result.conf.item() >= 0.5:
+                detected_objects.append({
+                    "object_index": idx,
+                    "confidence": result.conf.item(),
+                    "box": result.xyxy.tolist()
+                })
 
     return detected_objects
 
