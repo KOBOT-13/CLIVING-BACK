@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from django.contrib.auth import views as auth_views
 from .views import *
+from rest_framework_simplejwt.views import TokenRefreshView
 
 router = DefaultRouter()
 
@@ -21,6 +22,7 @@ urlpatterns = [
     # log in&out
     path('auth/login/', CustomLoginView.as_view(), name='custom_login'),
     path('auth/logout/', CustomLogoutView.as_view(), name='custom-logout'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # profile
     path('profile/', ProfileView.as_view(), name='profile'),

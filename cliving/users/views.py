@@ -107,6 +107,7 @@ class RegisterView(generics.CreateAPIView):
         # 유저 생성 (검증 및 저장은 시리얼라이저가 처리)
         serializer.save()
 
+
 class CheckUsernameView(APIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')

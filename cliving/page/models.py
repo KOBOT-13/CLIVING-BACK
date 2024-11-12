@@ -47,6 +47,7 @@ def seconds_to_time(seconds):
 
 # Create your models here.
 
+
 class Page(models.Model):
     date = models.CharField(max_length=6, primary_key=True, editable=False)
     date_dateFieldValue = models.DateField(auto_now_add=True, verbose_name="date_dateFieldValue")
@@ -68,6 +69,7 @@ class Page(models.Model):
     def __str__(self):
         return self.date
 
+
 class Video(models.Model):
     custom_id = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
     #비디오 키입니다. 형식 ex)240622-01
@@ -77,6 +79,7 @@ class Video(models.Model):
     end_time = models.DateTimeField(null=True, blank=True, editable=True, verbose_name="Recording End Time")
     start_time = models.DateTimeField(verbose_name="Recording Start Time", null=True, blank=True)
     duration = models.IntegerField(help_text="Duration of the video in seconds", null=True, blank=True)
+
 
 class VideoClip(models.Model):
     video_clip_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # UUID 필드
