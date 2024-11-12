@@ -3,6 +3,7 @@ from collections import Counter
 from django.core.files.base import ContentFile
 from django.shortcuts import render, get_object_or_404
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
@@ -97,9 +98,11 @@ class MonthlyColorTriesView(APIView):
 
         return Response(results)
 class AnnualColorTriesView(APIView):
+    # permission_classes = [IsAuthenticated]
     def get(self, request):
+        # user = request.user
         current_year = timezone.now().strftime('%y')
-        yearly_pages = Page.objects.filter(date__startswith=current_year)
+        yearly_pages = Page.objects.filter(date__startswith=current_year) #user=user,
 
         color_counter = Counter()
 
