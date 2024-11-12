@@ -10,10 +10,10 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-#media/Frame/
-#media/images/
-#media/videofiles/
-#meida/clips/
+media/Frame/
+media/images/
+media/videofiles/
+meida/clips/
 
 # If your build process includes running collectstatic, then you probably don't need or want to include staticfiles/
 # in your Git repository. Update and uncomment the following line accordingly.
