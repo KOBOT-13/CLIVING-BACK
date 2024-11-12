@@ -23,39 +23,51 @@ from django.core.files.storage import default_storage
 from .hold_utils import perform_object_detection, save_detection_results
 from moviepy.editor import VideoFileClip
 
+
 def time_to_seconds(time_obj):
     return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
 
-# Create your views here.
+
 class PageViewSet(viewsets.ModelViewSet):
-    queryset = Page.objects.all()
+    permission_classes = [IsAuthenticated]
     serializer_class = PageSerializer
 
+    def get_queryset(self):
+        return Page.objects.filter(user=self.request.user)
+
+
 class AllPagesView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, year):
         # 'date' 필드가 YYMMDD 형식이므로 year를 기반으로 필터링
         specific_year = f'{year}'
-        pages = Page.objects.filter(date__startswith=specific_year)
+        pages = Page.objects.filter(user=self.request.user, date__startswith=specific_year)
         serializer = PageSerializer(pages, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class SpecificMonthClimbingTimeView(APIView): # 특정 달 클라이밍 시간 get (1월 ~12월 반복 불러오기로 사용하면 될 듯 함)
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, year, month):
         # 입력 받은 연월을 YYMM 형태로 포맷팅
         specific_month = f'{year}{month:02d}'
-        total_time = Page.objects.filter(date__startswith=specific_month).aggregate(total_time=Sum('play_time'))
+        total_time = Page.objects.filter(user=self.request.user, date__startswith=specific_month).aggregate(total_time=Sum('play_time'))
         # 플레이 시간이 없는 경우 0으로 반환
         total_time = total_time['total_time'] if total_time['total_time'] is not None else 0
 
-
-        # 시리얼라이저를 사용하여 데이터 포맷
         serializer = ClimbingTimeSerializer({
             'year': year,
             'month': month,
             'total_climbing_time': total_time
         })
         return Response(serializer.data)
+
+
 class MonthlyClimbingTimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
         total_time = Page.objects.filter(date__startswith=current_month).aggregate(total_time=Sum('play_time'))
