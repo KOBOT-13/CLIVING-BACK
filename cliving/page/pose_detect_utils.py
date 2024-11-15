@@ -17,7 +17,7 @@ def detect_pose(video):
     is_started = False
     is_success = False
     skip_frames = 0
-
+    #내려오면서 start 찍히는것 개선 starting_point 받고 손 좌표로 로직 개선 / climbing 규칙을 제대로 ... 
 
     try:
         latest_first_image = FirstImage.objects.latest("created_at")
