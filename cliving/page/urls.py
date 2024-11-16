@@ -1,10 +1,11 @@
 from django.urls import path, include
 
 
-from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, FirstImageView,  \
-    SpecificMonthClimbingTimeView, MonthlyClimbingTimeView, AnnualClimbingTimeView, MonthlyColorTriesView, AnnualColorTriesView, \
-    VideoFileView, AllPagesView, ImageUploadView, VideoClipViewSet, VideoClipPathsView, VideoClipThumbnailsView,  \
-    VideoClipColorsView, VideoClipTypesView
+from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, HoldViewSet, FirstImageView, \
+    SpecificMonthClimbingTimeView, MonthlyClimbingTimeView, AnnualClimbingTimeView, SpecificMonthColorTriesView, \
+    SpecificAnnualColorTriesView, \
+    VideoFileView, AllPagesView, ImageUploadView, VideoClipViewSet, VideoClipPathsView, VideoClipThumbnailsView, \
+    VideoClipColorsView, VideoClipTypesView, SpecificAnnualClimbingTimeView
 
 from rest_framework.routers import DefaultRouter
 
@@ -24,8 +25,9 @@ urlpatterns = [
         path('statistics/monthly/climbing-time/', MonthlyClimbingTimeView.as_view(), name='monthly-climbing-time'),
         path('statistics/annual/climbing-time/', AnnualClimbingTimeView.as_view(), name='annual-climbing-time'),
         path('statistics/climbing-time/<int:year>/<int:month>/', SpecificMonthClimbingTimeView.as_view(), name='specific-month-climbing-time'),
-        path('statistics/monthly/color-tries/', MonthlyColorTriesView.as_view(), name='monthly-color-tries'),
-        path('statistics/annual/color-tries/', AnnualColorTriesView.as_view(), name='annual-color-tries'),
+        path('statistics/climbing-time/<int:year>/', SpecificAnnualClimbingTimeView.as_view(), name='specific-annual-climbing-time'),
+        path('statistics/color-tries/<int:year>/<int:month>/', SpecificMonthColorTriesView.as_view(), name='monthly-color-tries'),
+        path('statistics/color-tries/<int:year>/', SpecificAnnualColorTriesView.as_view(), name='annual-color-tries'),
         path('video/<str:custom_id>/file/', VideoFileView.as_view(), name='video-file'),
         path('pages/<int:year>/', AllPagesView.as_view(), name='all-pages-list'),
         path('videoclips/by_page/', VideoClipViewSet.as_view({'get': 'by_page'})),
