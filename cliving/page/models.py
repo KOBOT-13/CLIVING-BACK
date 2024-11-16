@@ -1,5 +1,5 @@
 import uuid
-
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.db.models.signals import pre_save, post_save
@@ -10,6 +10,8 @@ from django.core.files.storage import default_storage
 from django.utils import timezone
 from .hold_utils import perform_object_detection, save_detection_results
 import os
+
+User = get_user_model()
 
 COLOR_CHOICES = [
     ('orange', 'orange'),
@@ -32,8 +34,10 @@ TYPE_CHOICES = [
         (2, 'fail'),
     ]
 
+
 def time_to_seconds(time_obj):
     return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second
+
 
 def seconds_to_time(seconds):
     # datetime.timedelta 객체 생성
@@ -49,7 +53,9 @@ def seconds_to_time(seconds):
 
 
 class Page(models.Model):
-    date = models.CharField(max_length=6, primary_key=True, editable=False)
+    id = models.AutoField(primary_key=True)
+    date = models.CharField(max_length=6, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pages')
     date_dateFieldValue = models.DateField(auto_now_add=True, verbose_name="date_dateFieldValue")
     climbing_center_name = models.CharField(max_length=20, verbose_name="center_name")
     bouldering_clear_color = ArrayField(models.CharField(max_length=10, choices=COLOR_CHOICES),null=True, blank=True, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
@@ -59,20 +65,20 @@ class Page(models.Model):
     today_start_time = models.TimeField(blank=True, null=True, verbose_name="start")  #암장에서 첫번째 영상을 시작한 시간
     today_end_time = models.TimeField(blank=True, null=True, verbose_name="end")  #암장에서 마지막 영상을 끝낸 시간(암장에서 있던 시간을 기록)
     play_time = models.IntegerField(help_text="climbing total play time in seconds", null=True, blank=True)  #영상 촬영 시간
+
     def save(self, *args, **kwargs):
         if not self.date:
             self.date = datetime.now().strftime('%y%m%d')  # YYMMDD 형식으로 저장
         extracted_date = datetime.strptime(self.date, '%y%m%d').date()
         self.date_dateFieldValue = extracted_date
         super(Page, self).save(*args, **kwargs)
-        Page.objects.filter(pk=self.pk).update(date_dateFieldValue=extracted_date)
+
     def __str__(self):
-        return self.date
+        return f"{self.user.username} - {self.date}"
 
 
 class Video(models.Model):
-    custom_id = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
-    #비디오 키입니다. 형식 ex)240622-01
+    custom_id = models.CharField(max_length=12, primary_key=True, editable=False, unique=True) # 비디오 키입니다. 형식 ex)240622-01
     page_id = models.ForeignKey(Page, related_name="video", null=True, on_delete=models.CASCADE)
     video_color = models.CharField(max_length=12, choices=COLOR_CHOICES, null=True, blank=True, verbose_name="Color of the hold")
     videofile = models.FileField(upload_to='videofiles/')

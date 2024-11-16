@@ -25,8 +25,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # profile
-    path('profile/', ProfileView.as_view(), name='profile'),
-    path('profile/update/', ProfileUpdateView.as_view(), name='profile-update'),
+    path('profile/', ProfileViewSet.as_view({'get': 'retrieve', 'patch': 'update'}), name='profile-detail'),
 
     # delete_account
     path('delete-account/', DeleteAccountView.as_view(), name='delete-account'),

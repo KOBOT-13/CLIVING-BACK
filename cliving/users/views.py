@@ -9,13 +9,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, mixins
 from dj_rest_auth.views import LoginView
 from django.contrib.auth import authenticate, login
+from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import views as auth_views
 # from users.adapter import CustomAccountAdapter
 from rest_framework import generics
 from django.utils.http import urlsafe_base64_decode
 from .models import CustomUser, PhoneVerification
-from .serializers import CustomUserSerializer, ProfileUpdateSerializer
+from .serializers import CustomUserSerializer, ProfileSerializer
 from django.contrib.auth import authenticate, login, get_user_model
 from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth.tokens import default_token_generator
@@ -207,30 +208,26 @@ class DeleteAccountView(APIView):
             return Response({"detail": f"회원 탈퇴 중 오류가 발생했습니다: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ProfileUpdateView(generics.GenericAPIView, mixins.UpdateModelMixin):
-    permission_classes = [IsAuthenticated]
-    queryset = CustomUser.objects.all()
-    serializer_class = ProfileUpdateSerializer
-    parser_classes = [MultiPartParser, FormParser, JSONParser]
-
-    def get_object(self):
-        return self.request.user
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def patch(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
-
-
-class ProfileView(APIView):
+class ProfileViewSet(ModelViewSet):
+    serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        user = request.user
-        profile_image = user.profile_image.url if user.profile_image else None
-        return Response({
-            'username': user.username,
-            'nickname': user.nickname,
-            'profile_image': profile_image,
-        })
+    def retrieve(self, request, *args, **kwargs):
+        # 현재 로그인된 사용자만 반환
+        profile = self.request.user
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        # 현재 로그인된 사용자만 업데이트
+        profile = self.request.user
+        serializer = self.get_serializer(profile, data=request.data, partial=True)  # 부분 업데이트(PATCH)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def get_queryset(self):
+        # 인증된 사용자만 쿼리셋 반환 (list 액션에서 필요할 수 있음)
+        return CustomUser.objects.filter(id=self.request.user.id)
+
+

@@ -9,13 +9,13 @@ from .views import PageViewSet, VideoViewSet, CheckpointViewSet, FrameViewSet, H
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
-router.register('page', PageViewSet)
-router.register('video', VideoViewSet)
-router.register('videoclips', VideoClipViewSet)
-router.register('checkpoint', CheckpointViewSet)
-router.register('frame', FrameViewSet)
-router.register('hold', HoldViewSet)
-router.register('image', FirstImageView)
+router.register('page', PageViewSet, basename='page')
+router.register('video', VideoViewSet, basename='video')
+router.register('videoclips', VideoClipViewSet, basename='videoclips')
+router.register('checkpoint', CheckpointViewSet, basename='checkpoint')
+router.register('frame', FrameViewSet, basename='frame')
+router.register('hold', HoldViewSet, basename='hold')
+router.register('image', FirstImageView, basename='image')
 
 
 urlpatterns = [

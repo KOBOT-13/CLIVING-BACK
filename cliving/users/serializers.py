@@ -42,12 +42,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return user
 
 
-class ProfileUpdateSerializer(serializers.ModelSerializer):
+class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['username', 'nickname', 'profile_image']
-        extra_kwargs = {
-            'username': {'required': False},
-            'nickname': {'required': False},
-            'profile_image': {'required': False},
-        }
+        fields = ['username', 'nickname', 'profile_image']  # 필요한 필드만 직렬화
