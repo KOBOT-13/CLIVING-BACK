@@ -65,12 +65,29 @@ class SpecificMonthClimbingTimeView(APIView): # 특정 달 클라이밍 시간 g
         return Response(serializer.data)
 
 
+class SpecificAnnualClimbingTimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, year):
+        specific_year = f'{year}'
+        total_time = Page.objects.filter(user=self.request.user, date__startswith=specific_year).aggregate(total_time=Sum('play_time'))
+        total_time = total_time['total_time'] if total_time['total_time'] is not None else 0
+
+        serializer = ClimbingTimeSerializer({
+            'year': year,
+            'total_climbing_time': total_time
+        })
+        return Response(serializer.data)
+
+
+# 이번달 클라이밍 시간 뷰
+# 삭제 예정
 class MonthlyClimbingTimeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         current_month = timezone.now().strftime('%y%m')
-        total_time = Page.objects.filter(date__startswith=current_month).aggregate(total_time=Sum('play_time'))
+        total_time = Page.objects.filter(user=self.request.user, date__startswith=current_month).aggregate(total_time=Sum('play_time'))
         total_time = total_time['total_time'] if total_time['total_time'] is not None else 0
 
         # 시리얼라이저를 사용하여 데이터 포맷
@@ -80,10 +97,16 @@ class MonthlyClimbingTimeView(APIView):
             'total_climbing_time': total_time
         })
         return Response(serializer.data)
+
+
+# 올해 클라이밍 시간 뷰... 인데 특정년도가 필요하지 올해 클라이밍 시간 뷰가 필요한가??
+# 삭제 예정
 class AnnualClimbingTimeView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         current_year = timezone.now().strftime('%y')
-        total_time = Page.objects.filter(date__startswith=current_year).aggregate(total_time=Sum('play_time'))
+        total_time = Page.objects.filter(user= self.request.user, date__startswith=current_year).aggregate(total_time=Sum('play_time'))
         total_time = total_time['total_time'] if total_time['total_time'] is not None else 0
 
         # 시리얼라이저를 사용하여 데이터 포맷
@@ -93,10 +116,13 @@ class AnnualClimbingTimeView(APIView):
         })
         return Response(serializer.data)
 
-class MonthlyColorTriesView(APIView):
-    def get(self, request):
-        current_month = timezone.now().strftime('%y%m')
-        monthly_pages = Page.objects.filter(date__startswith=current_month)
+
+class SpecificMonthColorTriesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, year, month):
+        specific_month = f'{year}{month:02d}'
+        monthly_pages = Page.objects.filter(user=self.request.user, date__startswith=specific_month)
 
         color_counter = Counter()
 
@@ -109,12 +135,15 @@ class MonthlyColorTriesView(APIView):
                    color_counter.items()]
 
         return Response(results)
-class AnnualColorTriesView(APIView):
-    # permission_classes = [IsAuthenticated]
-    def get(self, request):
+
+
+class SpecificAnnualColorTriesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, year):
         # user = request.user
-        current_year = timezone.now().strftime('%y')
-        yearly_pages = Page.objects.filter(date__startswith=current_year) #user=user,
+        specific_year = f'{year}'
+        yearly_pages = Page.objects.filter(user=self.request.user, date__startswith=specific_year)
 
         color_counter = Counter()
 
@@ -127,6 +156,7 @@ class AnnualColorTriesView(APIView):
                    color_counter.items()]
 
         return Response(results)
+
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
@@ -158,9 +188,9 @@ class VideoViewSet(viewsets.ModelViewSet):
 
 
         if page.today_start_time is None:
-            page.today_start_time = start_time # 첫번째 영상을 시작한 시간
+            page.today_start_time = start_time  # 첫번째 영상을 시작한 시간
 
-        page.today_end_time = end_time # 마지막 영상을 끝낸 시간
+        page.today_end_time = end_time  # 마지막 영상을 끝낸 시간
 
         if page.play_time is None:
             page.play_time = duration
