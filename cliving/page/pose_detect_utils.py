@@ -115,8 +115,8 @@ def detect_pose(video):
                     else:
                         frame_count = 0
             else:
-                x5, x6, y5, y6 = (start_hold[0].x1/ 3024, start_hold[0].x2/ 3024, start_hold[0].y1/ 4032, start_hold[0].y2/ 4032)
-                x7, x8, y7, y8 = (start_hold[1].x1/ 3024, start_hold[1].x2/ 3024, start_hold[1].y1/ 4032, start_hold[1].y2/ 4032)
+                x5, x6, y5, y6 = (start_hold[0].x1/ 1080, start_hold[0].x2/ 1080, start_hold[0].y1/ 1920, start_hold[0].y2/ 1920)
+                x7, x8, y7, y8 = (start_hold[1].x1/ 1080, start_hold[1].x2/ 1080, start_hold[1].y1/ 1920, start_hold[1].y2/ 1920)
                 if not is_started and (
                     ((left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
                     (left_wrist is not None and x7 <= left_wrist.x <= x8 and y7 <= left_wrist.y <= y7)) and
