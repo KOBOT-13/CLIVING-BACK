@@ -65,15 +65,15 @@ def detect_pose(video):
             top_values,
         )
 
-    if not bottom_hold:
-        print(
-            "'custom_error': No bottom hold found for the latest first image. Using default values: ",
-            bottom_values,
-        )
+    # if not bottom_hold:
+    #     print(
+    #         "'custom_error': No bottom hold found for the latest first image. Using default values: ",
+    #         bottom_values,
+    #     )
 
     # y_fail_point2 값이 1을 초과할 때 y4 값으로 설정
     if "y_fail_point2" in locals() and y_fail_point2 > 1:
-        y_fail_point2 = bottom_values["y2"]
+        y_fail_point2 = bottom_hold.y2
 
     cap = cv2.VideoCapture(video.videofile.path)
     with mp_pose.Pose(
