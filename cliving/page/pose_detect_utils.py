@@ -46,15 +46,18 @@ def detect_pose(video):
     x2 = top_values["x2"]
     y1 = top_values["y1"]
     y2 = top_values["y2"]
-    y3 = bottom_values["y1"]
-    y4 = bottom_values["y2"]
-    y_fail_point2 = bottom_values["y2"] * 1.1
-    bottom_values = {
-        "x1": bottom_hold.x1 / 1080 if bottom_hold else default_bottom["x1"],
-        "x2": bottom_hold.x2 / 1080 if bottom_hold else default_bottom["x2"],
-        "y1": bottom_hold.y1 / 1920 if bottom_hold else default_bottom["y1"],
-        "y2": bottom_hold.y2 / 1920 if bottom_hold else default_bottom["y2"],
-    }
+    
+    y_fail_point2 = bottom_hold.y2 * 1.05
+    # bottom_values = {
+    #     "x3": bottom_hold.x1 / 1080 if bottom_hold else default_bottom["x1"],
+    #     "x4": bottom_hold.x2 / 1080 if bottom_hold else default_bottom["x2"],
+    #     "y3": bottom_hold.y1 / 1920 if bottom_hold else default_bottom["y1"],
+    #     "y4": bottom_hold.y2 / 1920 if bottom_hold else default_bottom["y2"],
+    # }
+    # x3 = bottom_values["x3"]
+    # x4 = bottom_values["x4"]
+    # y3 = bottom_values["y3"]
+    # y4 = bottom_values["y4"]
 
     if not top_hold:
         print(
