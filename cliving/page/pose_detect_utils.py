@@ -17,6 +17,7 @@ def detect_pose(video):
     is_started = False
     is_success = False
     skip_frames = 0
+    frame_count = 0
     #내려오면서 start 찍히는것 개선 starting_point 받고 손 좌표로 로직 개선 / climbing 규칙을 제대로 ... 
 
     try:
@@ -29,6 +30,7 @@ def detect_pose(video):
     default_bottom = {"x1": 0.1, "x2": 0.2, "y1": 0.1, "y2": 0.2}
 
     # Hold 객체에서 값을 가져오거나 기본값으로 설정
+    start_hold = list(Hold.objects.filter(first_image=latest_first_image))
     top_hold = Hold.objects.filter(first_image=latest_first_image, is_top=True).first()
     bottom_hold = Hold.objects.filter(
         first_image=latest_first_image, is_bottom=True
@@ -128,16 +130,60 @@ def detect_pose(video):
                 # 오른쪽 손목 탐지 실패 시 None으로 설정
                 right_wrist = None
 
-            # bottom_hold에 처음 지나가면 is_started를 True로 변경
-            if not is_started and (
-                (left_foot_y is not None and y3 <= left_foot_y <= y4)
-                or (right_foot_y is not None and y3 <= right_foot_y <= y4)
-            ):
-                is_started = True
-                start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-                start_checkpoints.append(start_checkpoint)
-                skip_frames = 60  # 60프레임 건너뛰기
-                continue
+            # start_hold가 1개일 때 2개일 때 다르게 적용
+            if len(start_hold) == 1:
+                x5, x6, y5, y6 = (start_hold[0].x1/ 3024, start_hold[0].x2/ 3024, start_hold[0].y1/ 4032, start_hold[0].y2/ 4032)
+                if not is_started:
+                    if left_wrist and right_wrist and (
+                        (x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
+                        (x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)):
+                        frame_count += 1
+                        if frame_count >= 120:
+                            is_started = True
+                            start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                            start_checkpoint = start_checkpoint - 2
+                            start_checkpoints.append(start_checkpoint)
+                    elif left_wrist or right_wrist and (
+                        (left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
+                        (right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)
+                    ):
+                        frame_count += 1
+                        if frame_count >= 120:
+                            is_started = True
+                            start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                            start_checkpoint = start_checkpoint - 2
+                            start_checkpoints.append(start_checkpoint)
+                    else:
+                        frame_count = 0
+            else:
+                x5, x6, y5, y6 = (start_hold[0].x1/ 3024, start_hold[0].x2/ 3024, start_hold[0].y1/ 4032, start_hold[0].y2/ 4032)
+                x7, x8, y7, y8 = (start_hold[1].x1/ 3024, start_hold[1].x2/ 3024, start_hold[1].y1/ 4032, start_hold[1].y2/ 4032)
+                if not is_started and (
+                    ((left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
+                    (left_wrist is not None and x7 <= left_wrist.x <= x8 and y7 <= left_wrist.y <= y7)) and
+                    ((right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6) or
+                    (right_wrist is not None and x7 <= right_wrist.x <= x8 and y7 <= right_wrist.y <= y8)) and not
+                    ((left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) and
+                    (right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= left_wrist.y <= y6))
+                ):
+                    frame_count += 1
+                    if frame_count >= 120:
+                        is_started = True
+                        start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                        start_checkpoint = start_checkpoint - 2
+                        start_checkpoints.append(start_checkpoint)
+                else:
+                    frame_count = 0
+            # # bottom_hold에 처음 지나가면 is_started를 True로 변경
+            # if not is_started and (
+            #     (left_foot_y is not None and y3 <= left_foot_y <= y4)
+            #     or (right_foot_y is not None and y3 <= right_foot_y <= y4)
+            # ):
+            #     is_started = True
+            #     start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+            #     start_checkpoints.append(start_checkpoint)
+            #     skip_frames = 60  # 60프레임 건너뛰기
+            #     continue
 
             if (
                 is_started
