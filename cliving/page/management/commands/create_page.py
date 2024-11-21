@@ -80,6 +80,7 @@ class Command(BaseCommand):
 
                 page = Page(
                     date=date_str,
+                    user="clone1",
                     date_dateFieldValue=datetime.strptime(date_str, '%y%m%d').date(),
                     climbing_center_name=center_name,
                     bouldering_clear_color=bouldering_clear_color,
