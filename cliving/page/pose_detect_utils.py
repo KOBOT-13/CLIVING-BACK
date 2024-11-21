@@ -250,10 +250,10 @@ def detect_pose(video):
                         and y1 <= right_wrist.y <= y2
                     ):
                         frame_count +=1
-                    if frame_count >=24 :
+                    if frame_count >=fps :
                         is_success = True
                         frame_count = 0 
-                        skip_frames = 30
+                        skip_frames = fps
                 
 
             # is_started가 True일 때만 실패/성공 체크
