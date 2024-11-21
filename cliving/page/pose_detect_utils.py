@@ -33,6 +33,7 @@ def detect_pose(video):
 
     # Hold 객체에서 값을 가져오거나 기본값으로 설정
     start_hold = list(Hold.objects.filter(first_image=latest_first_image, is_start=True))
+    print(len(start_hold))
     top_hold = Hold.objects.filter(first_image=latest_first_image, is_top=True).first()
     y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
     print(x5,x6,y5,y6)
