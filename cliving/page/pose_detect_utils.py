@@ -145,10 +145,21 @@ def detect_pose(video):
             if len(start_hold) == 1:
                 y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
                 if not is_started:
-                    # print('2')
-                    if left_wrist:
-                        # print("1")
-                        # print(left_wrist.x)
+                    if left_wrist and right_wrist and (
+                        ((x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) and
+                        (x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6))):
+                        print("1")
+                        frame_count += 1
+                        
+                    elif left_wrist is None and right_wrist and (
+                        (x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)):
+                        print("2")
+                        frame_count += 1
+                        
+                    elif left_wrist and right_wrist is None and (
+                        (x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6)):
+                        print("3")
+                        frame_count += 1
                     # if left_wrist and right_wrist and (
                     #     (x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
                     #     (x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)):
@@ -165,7 +176,7 @@ def detect_pose(video):
                     #     (right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)
                     # ):
                         frame_count += 1
-                        if frame_count >= 60:
+                        if frame_count >= 15:
                             is_started = True
                             start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                             start_checkpoint = start_checkpoint - 2
@@ -174,12 +185,8 @@ def detect_pose(video):
                     else:
                         frame_count = 0
             else:
-                # print("2")
                 y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
-                # print(x5,x6,y5,y6)
                 y7, y8, x7, x8 = (start_hold[1].x1/ 2096, start_hold[1].x2/ 2096, start_hold[1].y1/ 1179, start_hold[1].y2/ 1179)
-                # if left_wrist:
-                #     print(left_wrist.x)
                 xcount += 1
                 
                 if xcount >= 30:
@@ -192,7 +199,6 @@ def detect_pose(video):
                     xcount =0
                     
                 if not is_started:
-                    # print("0")
                     if left_wrist and right_wrist and (
                         ((x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
                         (x7 <= left_wrist.x <= x8 and y7 <= left_wrist.y <= y8)) and
@@ -211,35 +217,19 @@ def detect_pose(video):
                         (x7 <= right_wrist.x <= x8 and y7 <= right_wrist.y <= y8))):
                         print("2")
                         frame_count += 1
+                        
                     elif left_wrist and right_wrist is None and (
                         ((x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
                         (x7 <= left_wrist.x <= x8 and y7 <= left_wrist.y <= y8))):
                         print("3")
                         frame_count += 1
-                    # if (left_foot_y is not None and y_fail_point2 <= left_foot_y) or (
-                    # right_foot_y is not None and y_fail_point2 <= right_foot_y):
-                    #     frame_count = 0
-                    # else:
-                    #     if frame_count >= 1:
-                    #         frame_count -= 1
+
                     if frame_count >= 15: 
-                        # print("1")
                         is_started = True
                         start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         start_checkpoint = start_checkpoint - 2
                         start_checkpoints.append(start_checkpoint)
                         frame_count = 0
-            # # bottom_hold에 처음 지나가면 is_started를 True로 변경
-            # if not is_started and (
-            #     (left_foot_y is not None and y3 <= left_foot_y <= y4)
-            #     or (right_foot_y is not None and y3 <= right_foot_y <= y4)
-            # ):
-            #     is_started = True
-            #     start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-            #     start_checkpoints.append(start_checkpoint)
-            #     skip_frames = 60  # 60프레임 건너뛰기
-            #     continue
-
             if (
                 is_started
                 and not is_success
