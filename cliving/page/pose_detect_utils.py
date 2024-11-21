@@ -89,6 +89,7 @@ def detect_pose(video):
     ) as pose:
         while cap.isOpened():
             fps = cap.get(cv2.CAP_PROP_FPS)  # fps 구하기 반올리해서 사용하기
+            fps = int(fps)
             # print(type(fps))
             # 스킵 포인트 정적인 시간이 아닌 발을 기준으로 움직인 시간만큼 옮기기
             success, frame = cap.read()
@@ -175,7 +176,7 @@ def detect_pose(video):
                     #     (left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
                     #     (right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)
                     # ):
-                    if frame_count >= 15:
+                    if frame_count >= (fps / 2):
                         is_started = True
                         start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         start_checkpoint = start_checkpoint - 2
@@ -222,7 +223,7 @@ def detect_pose(video):
                         print("3")
                         frame_count += 1
 
-                    if frame_count >= 15: 
+                    if frame_count >= (fps / 2): 
                         is_started = True
                         start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         start_checkpoint = start_checkpoint - 2
