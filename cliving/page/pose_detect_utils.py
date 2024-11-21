@@ -232,26 +232,33 @@ def detect_pose(video):
                         frame_count = 0
             if (
                 is_started
-                and not is_success
-                and (
-                    (
-                        left_wrist is not None
+                and not is_success):
+                    if (left_wrist is not None
                         and x1 <= left_wrist.x <= x2
-                        and y1 <= left_wrist.y <= y2
-                    )
-                    or (
+                        and y1 <= left_wrist.y <= y2):
+                        frame_count += 1
+                    elif (
                         right_wrist is not None
                         and x1 <= right_wrist.x <= x2
                         and y1 <= right_wrist.y <= y2
-                    )
-                )
-            ):
-                is_success = True
-                skip_frames = 30
+                    ): 
+                        frame_count +=1
+                    elif (
+                        right_wrist and left_wrist 
+                        and x1 <= left_wrist.x <= x2
+                        and y1 <= left_wrist.y <= y2
+                        and x1 <= right_wrist.x <= x2
+                        and y1 <= right_wrist.y <= y2
+                    ):
+                        frame_count +=1
+                    if frame_count >=24 :
+                        is_success = True
+                        skip_frames = 30
+                
 
             # is_started가 True일 때만 실패/성공 체크
             if is_started:
-                # bottom_hold * 1.1 범위를 지나가면 is_started를 False로 변경
+                # bottom_hold 의 가장 큰 y 좌표 범위를 지나가면 is_started를 False로 변경
                 if (left_foot_y is not None and y_fail_point2 <= left_foot_y) or (
                     right_foot_y is not None and y_fail_point2 <= right_foot_y
                 ):
@@ -279,7 +286,7 @@ def detect_pose(video):
         )
 
     for timestamp in success_checkpoints:
-        adjusted_time = timestamp + 2
+        adjusted_time = timestamp + 2 # timestamp 의미 해석하기 
         if adjusted_time > video_duration:
             adjusted_time = video_duration
         Checkpoint.objects.create(
