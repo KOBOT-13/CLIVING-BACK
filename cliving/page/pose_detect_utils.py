@@ -37,8 +37,8 @@ def detect_pose(video):
     top_hold = Hold.objects.filter(first_image=latest_first_image, is_top=True).first()
     y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
     print(x5,x6,y5,y6)
-    y7, y8, x7, x8 = (start_hold[1].x1/ 2096, start_hold[1].x2/ 2096, start_hold[1].y1/ 1179, start_hold[1].y2/ 1179)
-    print(x7,x8,y7,y8)
+    # y7, y8, x7, x8 = (start_hold[1].x1/ 2096, start_hold[1].x2/ 2096, start_hold[1].y1/ 1179, start_hold[1].y2/ 1179)
+    # print(x7,x8,y7,y8)
     bottom_hold = Hold.objects.filter(
         first_image=latest_first_image, is_bottom=True
     ).first()
@@ -89,7 +89,8 @@ def detect_pose(video):
     ) as pose:
         while cap.isOpened():
             fps = cap.get(cv2.CAP_PROP_FPS)  # fps 구하기 반올리해서 사용하기
-            # print(fps)
+            fps = int(fps)
+            # print(type(fps))
             # 스킵 포인트 정적인 시간이 아닌 발을 기준으로 움직인 시간만큼 옮기기
             success, frame = cap.read()
             if not success:
@@ -175,15 +176,13 @@ def detect_pose(video):
                     #     (left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
                     #     (right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)
                     # ):
-                        frame_count += 1
-                        if frame_count >= 15:
-                            is_started = True
-                            start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-                            start_checkpoint = start_checkpoint - 2
-                            start_checkpoints.append(start_checkpoint)
-                            frame_count = 0
-                    else:
+                    if frame_count >= (fps / 2):
+                        is_started = True
+                        start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                        start_checkpoint = start_checkpoint - 2
+                        start_checkpoints.append(start_checkpoint)
                         frame_count = 0
+                        
             else:
                 y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
                 y7, y8, x7, x8 = (start_hold[1].x1/ 2096, start_hold[1].x2/ 2096, start_hold[1].y1/ 1179, start_hold[1].y2/ 1179)
@@ -224,7 +223,7 @@ def detect_pose(video):
                         print("3")
                         frame_count += 1
 
-                    if frame_count >= 15: 
+                    if frame_count >= (fps / 2): 
                         is_started = True
                         start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         start_checkpoint = start_checkpoint - 2
