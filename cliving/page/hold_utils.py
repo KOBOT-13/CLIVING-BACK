@@ -14,7 +14,7 @@ def perform_object_detection(image_path):
     detected_objects = []
     if len(results) > 0 and len(results[0].boxes) > 0:
         for idx, result in enumerate(results[0].boxes):
-            if result.cls == 0 and result.conf.item() >= 0.5:
+            if result.cls == 0 and result.conf.item() >= 0.4:
                 detected_objects.append({
                     "object_index": idx,
                     "confidence": result.conf.item(),
