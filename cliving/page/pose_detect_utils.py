@@ -18,6 +18,8 @@ def detect_pose(video):
     is_success = False
     skip_frames = 0
     frame_count = 0
+    xcount = 0
+    ycount = 0
     #내려오면서 start 찍히는것 개선 starting_point 받고 손 좌표로 로직 개선 / climbing 규칙을 제대로 ... 
 
     try:
@@ -30,29 +32,34 @@ def detect_pose(video):
     default_bottom = {"x1": 0.1, "x2": 0.2, "y1": 0.1, "y2": 0.2}
 
     # Hold 객체에서 값을 가져오거나 기본값으로 설정
-    start_hold = list(Hold.objects.filter(first_image=latest_first_image))
+    start_hold = list(Hold.objects.filter(first_image=latest_first_image, is_start=True))
     top_hold = Hold.objects.filter(first_image=latest_first_image, is_top=True).first()
+    y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
+    print(x5,x6,y5,y6)
+    y7, y8, x7, x8 = (start_hold[1].x1/ 2096, start_hold[1].x2/ 2096, start_hold[1].y1/ 1179, start_hold[1].y2/ 1179)
+    print(x7,x8,y7,y8)
     bottom_hold = Hold.objects.filter(
         first_image=latest_first_image, is_bottom=True
     ).first()
     top_values = {
-        "x1": top_hold.x1 / 1080 if top_hold else default_top["x1"],
-        "x2": top_hold.x2 / 1080 if top_hold else default_top["x2"],
-        "y1": top_hold.y1 / 1920 if top_hold else default_top["y1"],
-        "y2": top_hold.y2 / 1920 if top_hold else default_top["y2"],
+        "y1": top_hold.x1 / 2096 if top_hold else default_top["x1"],
+        "y2": top_hold.x2 / 2096 if top_hold else default_top["x2"],
+        "x1": top_hold.y1 / 1179 if top_hold else default_top["y1"],
+        "x2": top_hold.y2 / 1179 if top_hold else default_top["y2"],
     }
     # 그리고 비교 연산에서 문자열로 사용하지 않도록 변수로 할당
     x1 = top_values["x1"]
     x2 = top_values["x2"]
     y1 = top_values["y1"]
     y2 = top_values["y2"]
-    
-    y_fail_point2 = bottom_hold.y2 * 1.05
+    print(x1,x2,y1,y2)
+    y_fail_point2 = bottom_hold.x2 / 2096
+    print(y_fail_point2)
     # bottom_values = {
-    #     "x3": bottom_hold.x1 / 1080 if bottom_hold else default_bottom["x1"],
-    #     "x4": bottom_hold.x2 / 1080 if bottom_hold else default_bottom["x2"],
-    #     "y3": bottom_hold.y1 / 1920 if bottom_hold else default_bottom["y1"],
-    #     "y4": bottom_hold.y2 / 1920 if bottom_hold else default_bottom["y2"],
+    #     "x3": bottom_hold.x1 / 1179 if bottom_hold else default_bottom["x1"],
+    #     "x4": bottom_hold.x2 / 1179 if bottom_hold else default_bottom["x2"],
+    #     "y3": bottom_hold.y1 / 2096 if bottom_hold else default_bottom["y1"],
+    #     "y4": bottom_hold.y2 / 2096 if bottom_hold else default_bottom["y2"],
     # }
     # x3 = bottom_values["x3"]
     # x4 = bottom_values["x4"]
@@ -80,7 +87,8 @@ def detect_pose(video):
         min_detection_confidence=0.5, min_tracking_confidence=0.5
     ) as pose:
         while cap.isOpened():
-            fps = cap.get(cv2.CAP_PROP_FPS)  # fps 구하기
+            fps = cap.get(cv2.CAP_PROP_FPS)  # fps 구하기 반올리해서 사용하기
+            # print(fps)
             # 스킵 포인트 정적인 시간이 아닌 발을 기준으로 움직인 시간만큼 옮기기
             success, frame = cap.read()
             if not success:
@@ -134,48 +142,92 @@ def detect_pose(video):
 
             # start_hold가 1개일 때 2개일 때 다르게 적용
             if len(start_hold) == 1:
-                x5, x6, y5, y6 = (start_hold[0].x1/ 1080, start_hold[0].x2/ 1080, start_hold[0].y1/ 1920, start_hold[0].y2/ 1920)
+                y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
                 if not is_started:
-                    if left_wrist and right_wrist and (
-                        (x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
-                        (x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)):
+                    # print('2')
+                    if left_wrist:
+                        # print("1")
+                        # print(left_wrist.x)
+                    # if left_wrist and right_wrist and (
+                    #     (x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
+                    #     (x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)):
+                    #     # print(left_wrist.x)
+                    #     frame_count += 1
+                    #     if frame_count >= 60:
+                    #         is_started = True
+                    #         start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                    #         start_checkpoint = start_checkpoint - 2
+                    #         start_checkpoints.append(start_checkpoint)
+                    #         frame_count = 0
+                    # elif left_wrist or right_wrist and (
+                    #     (left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
+                    #     (right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)
+                    # ):
                         frame_count += 1
-                        if frame_count >= 120:
+                        if frame_count >= 60:
                             is_started = True
                             start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                             start_checkpoint = start_checkpoint - 2
                             start_checkpoints.append(start_checkpoint)
-                    elif left_wrist or right_wrist and (
-                        (left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
-                        (right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6)
-                    ):
-                        frame_count += 1
-                        if frame_count >= 120:
-                            is_started = True
-                            start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-                            start_checkpoint = start_checkpoint - 2
-                            start_checkpoints.append(start_checkpoint)
+                            frame_count = 0
                     else:
                         frame_count = 0
             else:
-                x5, x6, y5, y6 = (start_hold[0].x1/ 1080, start_hold[0].x2/ 1080, start_hold[0].y1/ 1920, start_hold[0].y2/ 1920)
-                x7, x8, y7, y8 = (start_hold[1].x1/ 1080, start_hold[1].x2/ 1080, start_hold[1].y1/ 1920, start_hold[1].y2/ 1920)
-                if not is_started and (
-                    ((left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
-                    (left_wrist is not None and x7 <= left_wrist.x <= x8 and y7 <= left_wrist.y <= y7)) and
-                    ((right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6) or
-                    (right_wrist is not None and x7 <= right_wrist.x <= x8 and y7 <= right_wrist.y <= y8)) and not
-                    ((left_wrist is not None and x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) and
-                    (right_wrist is not None and x5 <= right_wrist.x <= x6 and y5 <= left_wrist.y <= y6))
-                ):
-                    frame_count += 1
-                    if frame_count >= 120:
+                # print("2")
+                y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
+                # print(x5,x6,y5,y6)
+                y7, y8, x7, x8 = (start_hold[1].x1/ 2096, start_hold[1].x2/ 2096, start_hold[1].y1/ 1179, start_hold[1].y2/ 1179)
+                # if left_wrist:
+                #     print(left_wrist.x)
+                xcount += 1
+                
+                if xcount >= 30:
+                    ycount += 1
+                    print(ycount)
+                    if left_wrist:
+                        print("left_wristx : ",left_wrist.x)
+                        print("left_wristy : ",left_wrist.y)
+                    # print("right_wrist : ",right_wrist)
+                    xcount =0
+                    
+                if not is_started:
+                    # print("0")
+                    if left_wrist and right_wrist and (
+                        ((x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
+                        (x7 <= left_wrist.x <= x8 and y7 <= left_wrist.y <= y8)) and
+                        ((x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6) or
+                        (x7 <= right_wrist.x <= x8 and y7 <= right_wrist.y <= y8)) ):
+                        # and not
+                        # ((x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) and
+                        # (x5 <= right_wrist.x <= x6 and y5 <= left_wrist.y <= y6)) and not
+                        # ((x7 <= left_wrist.x <= x8 and y7 <= left_wrist.y <= y8) and
+                        # (x7 <= right_wrist.x <= x8 and y7 <= left_wrist.y <= y8))):
+                        print("1")
+                        frame_count += 1
+                        
+                    elif left_wrist is None and right_wrist and (
+                        ((x5 <= right_wrist.x <= x6 and y5 <= right_wrist.y <= y6) or
+                        (x7 <= right_wrist.x <= x8 and y7 <= right_wrist.y <= y8))):
+                        print("2")
+                        frame_count += 1
+                    elif left_wrist and right_wrist is None and (
+                        ((x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) or
+                        (x7 <= left_wrist.x <= x8 and y7 <= left_wrist.y <= y8))):
+                        print("3")
+                        frame_count += 1
+                    # if (left_foot_y is not None and y_fail_point2 <= left_foot_y) or (
+                    # right_foot_y is not None and y_fail_point2 <= right_foot_y):
+                    #     frame_count = 0
+                    # else:
+                    #     if frame_count >= 1:
+                    #         frame_count -= 1
+                    if frame_count >= 15: 
+                        # print("1")
                         is_started = True
                         start_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
                         start_checkpoint = start_checkpoint - 2
                         start_checkpoints.append(start_checkpoint)
-                else:
-                    frame_count = 0
+                        frame_count = 0
             # # bottom_hold에 처음 지나가면 is_started를 True로 변경
             # if not is_started and (
             #     (left_foot_y is not None and y3 <= left_foot_y <= y4)
@@ -193,12 +245,12 @@ def detect_pose(video):
                 and (
                     (
                         left_wrist is not None
-                        and x1 <= 1 - left_wrist.x <= x2
+                        and x1 <= left_wrist.x <= x2
                         and y1 <= left_wrist.y <= y2
                     )
                     or (
                         right_wrist is not None
-                        and x1 <= 1 - right_wrist.x <= x2
+                        and x1 <= right_wrist.x <= x2
                         and y1 <= right_wrist.y <= y2
                     )
                 )
