@@ -69,7 +69,7 @@ def detect_pose(video):
 
     if not top_hold:
         print(
-            "'custom_error': No top hold found for the latest first image. Using default values: ",
+            "'custom_error': No top hold found for the latest first image. Using default values:     ",
             top_values,
         )
 
@@ -253,6 +253,7 @@ def detect_pose(video):
                         frame_count +=1
                     if frame_count >=24 :
                         is_success = True
+                        frame_count = 0 
                         skip_frames = 30
                 
 
