@@ -398,7 +398,7 @@ class ImageUploadView(APIView):
         if serializer.is_valid():
             image = serializer.save()
             image_path = image.image.path
-            detections = perform_object_detection(image_path)
+            detections, width, height = perform_object_detection(image_path)
             save_detection_results(image.id, detections)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
