@@ -291,7 +291,7 @@ def detect_pose(video):
             adjusted_time = video_duration
         Checkpoint.objects.create(
             video=video,
-            time=datetime.utcfromtimestamp(timestamp).time(),
+            time=datetime.utcfromtimestamp(adjusted_time).time(),
             type=1,  # 성공 체크포인트
         )
 
@@ -301,7 +301,7 @@ def detect_pose(video):
             adjusted_time = video_duration
         Checkpoint.objects.create(
             video=video,
-            time=datetime.utcfromtimestamp(timestamp).time(),
+            time=datetime.utcfromtimestamp(adjusted_time).time(),
             type=2,  # 실패 체크포인트
         )
 
