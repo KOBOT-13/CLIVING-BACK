@@ -24,9 +24,10 @@ def detect_pose(video):
 
     try:
         latest_first_image = FirstImage.objects.latest("created_at")
+        width = latest_first_image.width
+        height = latest_first_image.height
     except FirstImage.DoesNotExist:
         return {"error": "No FirstImage found"}
-
     # 기본값 설정
     default_top = {"x1": 0.4, "x2": 0.6, "y1": 0.2, "y2": 0.4}
     default_bottom = {"x1": 0.1, "x2": 0.2, "y1": 0.1, "y2": 0.2}
@@ -35,18 +36,18 @@ def detect_pose(video):
     start_hold = list(Hold.objects.filter(first_image=latest_first_image, is_start=True))
     print(len(start_hold))
     top_hold = Hold.objects.filter(first_image=latest_first_image, is_top=True).first()
-    y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
+    y5, y6, x5, x6 = (start_hold[0].x1/ height, start_hold[0].x2/ height, start_hold[0].y1/ width, start_hold[0].y2/ width)
     print(x5,x6,y5,y6)
-    # y7, y8, x7, x8 = (start_hold[1].x1/ 2096, start_hold[1].x2/ 2096, start_hold[1].y1/ 1179, start_hold[1].y2/ 1179)
+    # y7, y8, x7, x8 = (start_hold[1].x1/ height, start_hold[1].x2/ height, start_hold[1].y1/ width, start_hold[1].y2/ width)
     # print(x7,x8,y7,y8)
     bottom_hold = Hold.objects.filter(
         first_image=latest_first_image, is_bottom=True
     ).first()
     top_values = {
-        "y1": top_hold.x1 / 2096 if top_hold else default_top["x1"],
-        "y2": top_hold.x2 / 2096 if top_hold else default_top["x2"],
-        "x1": top_hold.y1 / 1179 if top_hold else default_top["y1"],
-        "x2": top_hold.y2 / 1179 if top_hold else default_top["y2"],
+        "y1": top_hold.x1 / height if top_hold else default_top["x1"],
+        "y2": top_hold.x2 / height if top_hold else default_top["x2"],
+        "x1": top_hold.y1 / width if top_hold else default_top["y1"],
+        "x2": top_hold.y2 / width if top_hold else default_top["y2"],
     }
     # 그리고 비교 연산에서 문자열로 사용하지 않도록 변수로 할당
     x1 = top_values["x1"]
@@ -54,13 +55,13 @@ def detect_pose(video):
     y1 = top_values["y1"]
     y2 = top_values["y2"]
     print(x1,x2,y1,y2)
-    y_fail_point2 = bottom_hold.x2 / 2096
+    y_fail_point2 = bottom_hold.x2 / height
     print(y_fail_point2)
     # bottom_values = {
-    #     "x3": bottom_hold.x1 / 1179 if bottom_hold else default_bottom["x1"],
-    #     "x4": bottom_hold.x2 / 1179 if bottom_hold else default_bottom["x2"],
-    #     "y3": bottom_hold.y1 / 2096 if bottom_hold else default_bottom["y1"],
-    #     "y4": bottom_hold.y2 / 2096 if bottom_hold else default_bottom["y2"],
+    #     "x3": bottom_hold.x1 / width if bottom_hold else default_bottom["x1"],
+    #     "x4": bottom_hold.x2 / width if bottom_hold else default_bottom["x2"],
+    #     "y3": bottom_hold.y1 / height if bottom_hold else default_bottom["y1"],
+    #     "y4": bottom_hold.y2 / height if bottom_hold else default_bottom["y2"],
     # }
     # x3 = bottom_values["x3"]
     # x4 = bottom_values["x4"]
@@ -144,7 +145,7 @@ def detect_pose(video):
 
             # start_hold가 1개일 때 2개일 때 다르게 적용
             if len(start_hold) == 1:
-                y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
+                y5, y6, x5, x6 = (start_hold[0].x1/ height, start_hold[0].x2/ height, start_hold[0].y1/ width, start_hold[0].y2/ width)
                 if not is_started:
                     if left_wrist and right_wrist and (
                         ((x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) and
@@ -184,8 +185,8 @@ def detect_pose(video):
                         frame_count = 0
                         
             else:
-                y5, y6, x5, x6 = (start_hold[0].x1/ 2096, start_hold[0].x2/ 2096, start_hold[0].y1/ 1179, start_hold[0].y2/ 1179)
-                y7, y8, x7, x8 = (start_hold[1].x1/ 2096, start_hold[1].x2/ 2096, start_hold[1].y1/ 1179, start_hold[1].y2/ 1179)
+                y5, y6, x5, x6 = (start_hold[0].x1/ height, start_hold[0].x2/ height, start_hold[0].y1/ width, start_hold[0].y2/ width)
+                y7, y8, x7, x8 = (start_hold[1].x1/ height, start_hold[1].x2/ height, start_hold[1].y1/ width, start_hold[1].y2/ width)
                 xcount += 1
                 
                 if xcount >= 30:

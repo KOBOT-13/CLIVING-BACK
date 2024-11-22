@@ -108,6 +108,8 @@ class FirstImage(models.Model):
     IMG_date = models.CharField(max_length=12, editable=False, unique=True)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    width = models.IntegerField(null=True, blank=True)
+    height = models.IntegerField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.IMG_date:
@@ -115,7 +117,10 @@ class FirstImage(models.Model):
             
         super().save(*args, **kwargs)
 
-        detections = perform_object_detection(self.image.path)
+        detections, width, height = perform_object_detection(self.image.path)
+        
+        self.width, self.height = width, height
+        super().save(*args, **kwargs)
         
         frame_instance = Frame.objects.create(image=self.image,date=self.IMG_date)
         
