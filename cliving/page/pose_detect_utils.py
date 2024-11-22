@@ -262,19 +262,24 @@ def detect_pose(video):
                 if (left_foot_y is not None and y_fail_point2 <= left_foot_y) or (
                     right_foot_y is not None and y_fail_point2 <= right_foot_y
                 ):
-                    if is_success:
-                        success_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-                        success_checkpoints.append(success_checkpoint)
-                        is_success = False
-                        is_started = False
-                        skip_frames = 30
-                        continue
+                    timestamp = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+                    if not timestamp - start_checkpoints[-1] <= 5:
+                        if is_success:
+                            success_checkpoint = timestamp
+                            success_checkpoints.append(success_checkpoint)
+                            is_success = False
+                            is_started = False
+                            skip_frames = 30
+                            continue
 
-                    is_started = False
-                    failure_checkpoint = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-                    failure_checkpoints.append(failure_checkpoint)
-                    skip_frames = 60  # 60프레임 건너뛰기
-                    continue
+                        is_started = False
+                        failure_checkpoint = timestamp
+                        failure_checkpoints.append(failure_checkpoint)
+                        skip_frames = 60  # 60프레임 건너뛰기
+                        continue
+                    
+                    else:
+                        start_checkpoints.pop()
     cap.release()
     video_duration = video.duration
     # 시작점 체크포인트 저장
