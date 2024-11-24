@@ -7,7 +7,7 @@ from datetime import datetime
 from .models import Checkpoint, Video, FirstImage, Hold
 
 
-def detect_pose(video):
+def detect_pose(video, user):
     mp_pose = mp.solutions.pose
 
     start_checkpoints = []
@@ -23,7 +23,7 @@ def detect_pose(video):
     #내려오면서 start 찍히는것 개선 starting_point 받고 손 좌표로 로직 개선 / climbing 규칙을 제대로 ... 
 
     try:
-        latest_first_image = FirstImage.objects.latest("created_at")
+        latest_first_image = FirstImage.objects.filter(video).latest("created_at")
         width = latest_first_image.width
         height = latest_first_image.height
     except FirstImage.DoesNotExist:

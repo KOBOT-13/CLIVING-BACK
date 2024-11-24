@@ -56,7 +56,7 @@ class Page(models.Model):
     id = models.AutoField(primary_key=True)
     date = models.CharField(max_length=6, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pages')
-    date_dateFieldValue = models.DateField(verbose_name="date_dateFieldValue")
+    date_dateFieldValue = models.DateField(null=True, blank=True, verbose_name="date_dateFieldValue")
     climbing_center_name = models.CharField(max_length=20, verbose_name="center_name")
     bouldering_clear_color = ArrayField(models.CharField(max_length=10, choices=COLOR_CHOICES),null=True, blank=True, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
     bouldering_clear_color_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='bcc_counter') #각 색깔 카운팅
@@ -78,19 +78,31 @@ class Page(models.Model):
 
 
 class Video(models.Model):
-    custom_id = models.CharField(max_length=12, primary_key=True, editable=False, unique=True) # 비디오 키입니다. 형식 ex)240622-01
-    page_id = models.ForeignKey(Page, related_name="video", null=True, on_delete=models.CASCADE)
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='videos')
+    custom_id = models.CharField(max_length=12)  # 비디오 키입니다. 형식 ex)240622-01
+    page_id_int = models.ForeignKey(Page, related_name="video", null=True, on_delete=models.CASCADE)  # Page.id
+    page_id = models.CharField(max_length=6, null=True, blank=True)  # Page.date
     video_color = models.CharField(max_length=12, choices=COLOR_CHOICES, null=True, blank=True, verbose_name="Color of the hold")
     videofile = models.FileField(upload_to='videofiles/')
     end_time = models.DateTimeField(null=True, blank=True, editable=True, verbose_name="Recording End Time")
     start_time = models.DateTimeField(verbose_name="Recording Start Time", null=True, blank=True)
     duration = models.IntegerField(help_text="Duration of the video in seconds", null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        if not self.custom_id:
+            date_str = self.page_id
+            count = Video.objects.filter(custom_id__startswith=date_str, user=self.user).count() + 1
+            sequence_str = f'{count:02d}'  # 두 자리 숫자
+            self.custom_id = f'{date_str}-{sequence_str}'
+        super().save(*args, **kwargs)  # 부모 클래스의 save 호출
+
 
 class VideoClip(models.Model):
     video_clip_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # UUID 필드
     video = models.ForeignKey(Video, related_name='video_clips', on_delete=models.CASCADE)
     page = models.ForeignKey(Page, related_name='video_clips', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='video_clips', on_delete=models.CASCADE)
     start_time = models.TimeField()
     end_time = models.TimeField()
     clip_color = models.CharField(max_length=10, choices=COLOR_CHOICES, null=True, blank=True, verbose_name="Color of the hold")
@@ -98,10 +110,12 @@ class VideoClip(models.Model):
     output_path = models.CharField(max_length=255)  # 클립 파일 경로
     thumbnail = models.ImageField(upload_to='thumbnails/', null=True, blank=True)
 
+
 class Checkpoint(models.Model):
     video = models.ForeignKey(Video, related_name='checkpoints', on_delete=models.CASCADE)
     time = models.TimeField()
     type = models.IntegerField(choices=TYPE_CHOICES)
+
 
 class Frame(models.Model):
     date = models.CharField(max_length=12, primary_key=True, editable=False, unique=True)
@@ -111,6 +125,7 @@ class Frame(models.Model):
 class FirstImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, related_name='FirstImage', on_delete=models.CASCADE)
     IMG_date = models.CharField(max_length=12, editable=False, unique=True)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -119,7 +134,7 @@ class FirstImage(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.IMG_date:
-            self.IMG_date = datetime.now().strftime('%y%m%d%H%M%S')
+            self.IMG_date = f'{self.user.id}_{datetime.now().strftime("%y%m%d%H%M%S")}'
             
         super().save(*args, **kwargs)
 
@@ -157,7 +172,8 @@ class FirstImage(models.Model):
             if bottom_hold:
                 bottom_hold.is_bottom = True
                 bottom_hold.save()
-                
+
+
 class Hold(models.Model):
     is_top = models.BooleanField(default=False, verbose_name="top")
     is_bottom = models.BooleanField(default=False, verbose_name="bottom")
