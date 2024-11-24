@@ -159,8 +159,12 @@ class SpecificAnnualColorTriesView(APIView):
 
 
 class VideoViewSet(viewsets.ModelViewSet):
-    queryset = Video.objects.all()
+    permission_classes = [IsAuthenticated]
     serializer_class = VideoSerializer
+    lookup_field = 'custom_id'
+
+    def get_queryset(self):
+        return Video.objects.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         video_file = request.FILES.get('videofile')
@@ -171,7 +175,7 @@ class VideoViewSet(viewsets.ModelViewSet):
         with VideoFileClip(video_file.temporary_file_path()) as video:
             duration = int(video.duration)  # 비디오 길이 계산
             start_time = end_time - timedelta(seconds=duration)  # 시작 시간 계산
-        page = Page.objects.get(date=page_id)
+        page = Page.objects.get(date=page_id, user=self.request.user)
 
         if not page.bouldering_clear_color:
             page.bouldering_clear_color = []
@@ -186,7 +190,6 @@ class VideoViewSet(viewsets.ModelViewSet):
             page.color_fail_counter.append(0)
             this_color_index = page.bouldering_clear_color.index(video_color)
 
-
         if page.today_start_time is None:
             page.today_start_time = start_time  # 첫번째 영상을 시작한 시간
 
@@ -196,18 +199,21 @@ class VideoViewSet(viewsets.ModelViewSet):
             page.play_time = duration
         else:
             page.play_time += duration
-        page.save(update_fields=['play_time', 'bouldering_clear_color','bouldering_clear_color_counter',\
-                  'color_success_counter','color_fail_counter', 'today_start_time', 'today_end_time'])
+        page.save(update_fields=['play_time', 'bouldering_clear_color','bouldering_clear_color_counter', \
+                  'color_success_counter', 'color_fail_counter', 'today_start_time', 'today_end_time'])
 
         date_str = page_id
-        count = Video.objects.filter(custom_id__startswith=date_str).count() + 1
+        print(date_str)
+        count = Video.objects.filter(custom_id__startswith=date_str, user=self.request.user).count() + 1
         sequence_str = f'{count:02d}'  # 두 자리 숫자 (01, 02, ...)
         custom_id = f'{date_str}-{sequence_str}'
+        print(custom_id)
 
         video = Video.objects.create(
-            custom_id=custom_id,
             videofile=video_file,
-            page_id=page,
+            user=self.request.user,
+            page_id_int=page,
+            page_id=page.date,
             video_color=video_color,
             end_time=end_time,
             start_time=start_time,
@@ -217,21 +223,22 @@ class VideoViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Video uploaded successfully', 'custom_id': custom_id}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
-    def create_checkpoint(self, request, pk=None):
+    def create_checkpoint(self, request, custom_id=None):
         try:
+            user = self.request.user
             video = self.get_object()
         except Video.DoesNotExist:
             return Response({'error': 'Invalid video ID'}, status=status.HTTP_400_BAD_REQUEST)
 
-        result = detect_pose(video)
+        result = detect_pose(video, user)
 
         return Response(result, status=status.HTTP_200_OK)
 
-    @action(detail = True, methods = ['post'])
-    def create_clip(self, request, pk=None):
+    @action(detail=True, methods=['post'])
+    def create_clip(self, request, custom_id=None):
         video = self.get_object()
         checkpoints = video.checkpoints.order_by('time') #체크포인트를 시간순으로 정렬
-        page = Page.objects.get(date=video.page_id)
+        page = Page.objects.get(date=video.page_id_int)
 
         start_checkpoint = None
         created_clips = []
@@ -247,7 +254,7 @@ class VideoViewSet(viewsets.ModelViewSet):
                 output_dir = 'media/clips'
                 if not os.path.exists(output_dir):  #디렉토리 없으면 만들어줌.
                     os.makedirs(output_dir)
-                output_path = f'media/clips/{video.custom_id}_{start_time_sec}_{end_time_sec}.mp4' #클립 파일명 설정부분.
+                output_path = f'media/clips/{video.user}_{video.custom_id}_{start_time_sec}_{end_time_sec}.mp4' #클립 파일명 설정부분.
                 print(f"Generating clip to path: {output_path}")
                 print(f"Video file path: {video.videofile.path}")
 
@@ -258,7 +265,7 @@ class VideoViewSet(viewsets.ModelViewSet):
                     continue
 
                 # 썸네일 생성 및 저장
-                thumbnail_path = f'{output_dir}/{video.custom_id}_{start_time_sec}_{end_time_sec}.jpg'
+                thumbnail_path = f'{output_dir}/{video.user}_{video.custom_id}_{start_time_sec}_{end_time_sec}.jpg'
 
                 print(f"Generating thumbnail to path: {thumbnail_path}")
 
@@ -281,7 +288,8 @@ class VideoViewSet(viewsets.ModelViewSet):
                     with open(thumbnail_path, 'rb') as thumbnail_file:
                         video_clip = VideoClip.objects.create(
                             video=video,
-                            page=video.page_id,
+                            page=page,
+                            user=video.user,
                             clip_color=video.video_color,
                             start_time=start_checkpoint.time,
                             end_time=checkpoint.time,
@@ -297,62 +305,85 @@ class VideoViewSet(viewsets.ModelViewSet):
         return Response({'status': 'Clips created', 'video_clips': VideoClipSerializer(created_clips, many=True).data})
 
 
-
 class VideoClipViewSet(viewsets.ModelViewSet):
     queryset = VideoClip.objects.all()
     serializer_class = VideoClipSerializer
+    permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['get'])
     def by_page(self, request):
         page_id = request.query_params.get('page_id')
         if page_id:
-            clips = VideoClip.objects.filter(page_id=page_id)
+            clips = VideoClip.objects.filter(user=self.request.user, page_id=page_id)
             serializer = VideoClipSerializer(clips, many=True)
             return Response(serializer.data)
         return Response({"error": "page_id not provided"}, status=400)
 
+
 class VideoClipThumbnailsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, page_id):
-        clips = VideoClip.objects.filter(page_id=page_id)
+        page = Page.objects.filter(user=self.request.user, date=page_id)
+        clips = VideoClip.objects.filter(user=self.request.user, page=page.id)
         serializer = VideoClipThumbnailSerializer(clips, many=True)
         thumbnails = [clip['thumbnail'] for clip in serializer.data]
         return Response(thumbnails)
 
+
 class VideoClipPathsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, page_id):
-        clips = VideoClip.objects.filter(page_id=page_id)
+        page = Page.objects.filter(user=self.request.user, date=page_id)
+        clips = VideoClip.objects.filter(user=self.request.user, page=page.id)
         serializer = VideoClipThumbnailSerializer(clips, many=True)
         paths = [clip['output_path'] for clip in serializer.data]
         return Response(paths)
 
+
 class VideoClipColorsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, page_id):
-        clips = VideoClip.objects.filter(page_id=page_id)
+        page = Page.objects.filter(user=self.request.user, date=page_id)
+        clips = VideoClip.objects.filter(user=self.request.user, page=page.id)
         serializer = VideoClipThumbnailSerializer(clips, many=True)
         color = [clip['clip_color'] for clip in serializer.data]
         return Response(color)
 
+
 class VideoClipTypesView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, page_id):
-        clips = VideoClip.objects.filter(page_id=page_id)
+        page = Page.objects.filter(user=self.request.user, date=page_id)
+        clips = VideoClip.objects.filter(user=self.request.user, page=page.id)
         serializer = VideoClipThumbnailSerializer(clips, many=True)
         type = [clip['type'] for clip in serializer.data]
         return Response(type)
 
+
 class VideoFileView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, custom_id):
-        video = get_object_or_404(Video, custom_id=custom_id)
+        video = get_object_or_404(Video, user=self.request.user, custom_id=custom_id)
         return Response({
             'videofile': video.videofile.url
         })
+
 
 class CheckpointViewSet(viewsets.ModelViewSet):
     queryset = Checkpoint.objects.all()
     serializer_class = CheckpointSerializer
 
+
 class FrameViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     queryset = Frame.objects.all()
     serializer_class = FrameSerializer
+
 
 class HoldViewSet(viewsets.ModelViewSet):
     queryset = Hold.objects.all()
@@ -385,12 +416,14 @@ class HoldViewSet(viewsets.ModelViewSet):
         except Hold.DoesNotExist:
             return Response({'error': 'Hold not found'}, status=status.HTTP_404_NOT_FOUND)
 
+
 class FirstImageView(viewsets.ModelViewSet):
     queryset = FirstImage.objects.all()
     serializer_class = FirstImageCRUDSerializer
     
     
 class ImageUploadView(APIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = FirstImageSerializer
     
     def post(self, request, *args, **kwargs):

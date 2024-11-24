@@ -8,6 +8,8 @@ class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Page
         fields = '__all__'
+
+
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
@@ -19,10 +21,12 @@ class VideoClipSerializer(serializers.ModelSerializer):
         model = VideoClip
         fields = '__all__'
 
+
 class VideoClipThumbnailSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoClip
         fields = ['output_path', 'thumbnail', 'clip_color', 'type']
+
 
 class ClimbingTimeSerializer(serializers.Serializer):
     year = serializers.CharField(max_length=4)  # 연도 정보

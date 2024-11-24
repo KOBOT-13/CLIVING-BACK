@@ -15,8 +15,8 @@ class PageAdmin(admin.ModelAdmin):
 
 
 class VideoAdmin(admin.ModelAdmin):
-    list_display = ['page_id', 'custom_id', 'videofile', 'end_time', 'start_time', 'duration', 'video_color']
-    fields = ['page_id', 'custom_id', 'videofile', 'end_time', 'start_time', 'duration','video_color']
+    list_display = ['user', 'page_id', 'page_id_int', 'custom_id', 'videofile', 'end_time', 'start_time', 'duration', 'video_color']
+    fields = ['user', 'page_id', 'page_id_int', 'custom_id', 'videofile', 'end_time', 'start_time', 'duration','video_color']
     readonly_fields = ['custom_id']
 
 
