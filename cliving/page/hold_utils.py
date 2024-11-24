@@ -7,7 +7,10 @@ from PIL import Image
 def perform_object_detection(image_path):
     model = YOLO('../cliving/cliving_hold_weight.pt')
 
-    image_np = np.array(Image.open(image_path))
+    image = Image.open(image_path)
+    image_np = np.array(image)
+    
+    width, height = image.size
 
     results = model(image_np)   
 
@@ -21,7 +24,7 @@ def perform_object_detection(image_path):
                     "box": result.xyxy.tolist()
                 })
 
-    return detected_objects
+    return detected_objects, width, height
 
 def save_detection_results(first_image_id, detections, output_dir='media/bbox'):
     from .models import Hold, FirstImage, Frame 

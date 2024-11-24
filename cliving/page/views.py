@@ -406,9 +406,9 @@ class HoldViewSet(viewsets.ModelViewSet):
         except Hold.DoesNotExist:
             return Response({'error': 'Hold not found'}, status=status.HTTP_404_NOT_FOUND)
         
-    def start_hold(self, first_image=None, index_numbeer=None):
+    def start_hold(self, request, first_image=None, index_number=None):
         try:
-            hold = Hold.objects.get(first_image_id=first_image, index_numbeer=index_numbeer)
+            hold = Hold.objects.get(first_image_id=first_image, index_number=index_number)
             hold.is_start = True
             hold.save()
             serializer = HoldSerializer(hold)
@@ -431,7 +431,7 @@ class ImageUploadView(APIView):
         if serializer.is_valid():
             image = serializer.save()
             image_path = image.image.path
-            detections = perform_object_detection(image_path)
+            detections, width, height = perform_object_detection(image_path)
             save_detection_results(image.id, detections)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
