@@ -148,7 +148,7 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 )
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'https://8689-1-209-175-112.ngrok-free.app']
 CSRF_COOKIE_HTTPONLY = False
 
 ROOT_URLCONF = 'cliving.urls' #최상위 urls.py 위치

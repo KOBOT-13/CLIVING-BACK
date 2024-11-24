@@ -21,7 +21,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         # 전화번호 인증 여부 확인
         try:
-            verification = PhoneVerification.objects.get(phone_number=data['phone_number'])
+            phone_number = data['phone_number'].replace('-', '')
+            verification = PhoneVerification.objects.get(phone_number=phone_number)
             if not verification.is_verified:
                 raise serializers.ValidationError("휴대폰 인증이 필요합니다.")
         except PhoneVerification.DoesNotExist:
@@ -33,12 +34,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
         # 비밀번호 처리
         password = validated_data.pop('password1')
         validated_data.pop('password2')
+        phone_number = validated_data.get('phone_number')
+        if phone_number:
+            validated_data['phone_number'] = phone_number.replace('-', '')
 
         # 유저 생성 및 인증 처리
         user = CustomUser(**validated_data)
         user.set_password(password)
         user.is_verified = True  # 인증된 사용자로 설정
         user.save()
+        PhoneVerification.objects.filter(phone_number=validated_data['phone_number']).delete()
         return user
 
 

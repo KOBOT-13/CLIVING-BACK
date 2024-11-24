@@ -178,10 +178,10 @@ class VideoViewSet(viewsets.ModelViewSet):
         page = Page.objects.get(date=page_id, user=self.request.user)
 
         if not page.bouldering_clear_color:
-            page.bouldering_clear_color = []
-            page.bouldering_clear_color_counter = []
-            page.color_success_counter = []
-            page.color_fail_counter = []
+            page.bouldering_clear_color = [video_color]
+            page.bouldering_clear_color_counter = [0]
+            page.color_success_counter = [0]
+            page.color_fail_counter = [0]
 
         if video_color not in page.bouldering_clear_color:
             page.bouldering_clear_color.append(video_color)
@@ -238,7 +238,7 @@ class VideoViewSet(viewsets.ModelViewSet):
     def create_clip(self, request, custom_id=None):
         video = self.get_object()
         checkpoints = video.checkpoints.order_by('time') #체크포인트를 시간순으로 정렬
-        page = Page.objects.get(date=video.page_id_int)
+        page = Page.objects.get(user=self.request.user, date=video.page_id)
 
         start_checkpoint = None
         created_clips = []
@@ -427,11 +427,19 @@ class ImageUploadView(APIView):
     serializer_class = FirstImageSerializer
     
     def post(self, request, *args, **kwargs):
-        serializer = FirstImageSerializer(data=request.data)
-        if serializer.is_valid():
-            image = serializer.save()
-            image_path = image.image.path
-            detections, width, height = perform_object_detection(image_path)
-            save_detection_results(image.id, detections)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = self.request.user
+        image_file = self.request.FILES.get('image')
+
+        first_image = FirstImage.objects.create(
+            user=user,
+            image=image_file
+        )
+
+        image_path = first_image.image.path
+
+        detections, width, height = perform_object_detection(image_path)
+        save_detection_results(first_image.id, detections)
+
+        serializer = self.serializer_class(instance = first_image)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -53,25 +53,30 @@ def send_sms(phone_number, verification_code):
         print(f"발송 실패: {e.code}, {e.msg}")
 
 
+def send_verification_code_func(phone_number):
+    verification_code = str(random.randint(100000, 999999))
+
+    phone_number = phone_number.replace('-', '')
+
+    # 기존 인증 기록 삭제 (같은 번호에 대해)
+    PhoneVerification.objects.filter(phone_number=phone_number).delete()
+
+    # 새로운 인증번호 저장
+    PhoneVerification.objects.create(
+        phone_number=phone_number,
+        verification_code=verification_code
+    )
+
+    # send_sms 주석 해제 시, 유료 sms 전송. 건당 20원.
+    print(f"Sending SMS to {phone_number}: 인증번호는 {verification_code}입니다.")
+    # send_sms(phone_number, verification_code)
+
+
 class SendPhoneVerificationCodeView(APIView):
     def post(self, request):
         phone_number = request.data.get('phone_number')
-        verification_code = str(random.randint(100000, 999999))
 
-        phone_number = phone_number.replace('-', '')
-
-        # 기존 인증 기록 삭제 (같은 번호에 대해)
-        PhoneVerification.objects.filter(phone_number=phone_number).delete()
-
-        # 새로운 인증번호 저장
-        PhoneVerification.objects.create(
-            phone_number=phone_number,
-            verification_code=verification_code
-        )
-
-        # send_sms 주석 해제 시, 유료 sms 전송. 건당 20원.
-        print(f"Sending SMS to {phone_number}: 인증번호는 {verification_code}입니다.")
-        # send_sms(phone_number, verification_code)
+        send_verification_code_func(phone_number)
 
         return Response({"detail": "인증번호가 발송되었습니다."}, status=status.HTTP_200_OK)
 
@@ -177,7 +182,13 @@ class ChangePasswordView(APIView):
 
         # 기존 비밀번호와 새 비밀번호 가져오기
         current_password = request.data.get('current_password')
-        new_password = request.data.get('new_password')
+        new_password1 = request.data.get('new_password1')
+        new_password2 = request.data.get('new_password2')
+
+        if new_password1 != new_password2:
+            return Response({"detail": "Passwords do not match."}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_password = new_password1
 
         # 기존 비밀번호 확인
         if not user.check_password(current_password):
@@ -206,6 +217,24 @@ class DeleteAccountView(APIView):
             return Response({"detail": "회원 탈퇴가 완료되었습니다."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"detail": f"회원 탈퇴 중 오류가 발생했습니다: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyUserAndSendVerificationCode(APIView):
+    def post(self, request):
+        username = request.data.get("username")
+        phone_number = request.data.get("phone_number")
+        phone_number = phone_number.replace('-', '')
+
+        try:
+            # 유저 검증
+            user = User.objects.get(username=username, phone_number=phone_number)
+
+            # 인증번호 발송
+            send_verification_code_func(phone_number)
+
+            return Response({"detail": "User verified. Verification code sent."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found or phone number mismatch."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ProfileViewSet(ModelViewSet):
