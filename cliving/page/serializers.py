@@ -7,7 +7,7 @@ from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage, VideoClip
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Page
-        fields = ['id', 'date', 'climbing_center_name']  # user는 제외
+        fields = ['id', 'date', 'climbing_center_name', 'date_dateFieldValue', 'bouldering_clear_color', 'bouldering_clear_color_counter', 'color_success_counter', 'color_fail_counter', 'today_start_time', 'today_end_time', 'play_time']  # user는 제외
 
     def create(self, validated_data):
         # 요청의 user 정보를 validated_data에 추가

@@ -31,6 +31,7 @@ def time_to_seconds(time_obj):
 class PageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = PageSerializer
+    lookup_field = 'date'
 
     def get_queryset(self):
         return Page.objects.filter(user=self.request.user)
@@ -324,7 +325,7 @@ class VideoClipThumbnailsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, page_id):
-        page = Page.objects.filter(user=self.request.user, date=page_id)
+        page = Page.objects.get(user=self.request.user, date=page_id)
         clips = VideoClip.objects.filter(user=self.request.user, page=page.id)
         serializer = VideoClipThumbnailSerializer(clips, many=True)
         thumbnails = [clip['thumbnail'] for clip in serializer.data]
@@ -335,7 +336,7 @@ class VideoClipPathsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, page_id):
-        page = Page.objects.filter(user=self.request.user, date=page_id)
+        page = Page.objects.get(user=self.request.user, date=page_id)
         clips = VideoClip.objects.filter(user=self.request.user, page=page.id)
         serializer = VideoClipThumbnailSerializer(clips, many=True)
         paths = [clip['output_path'] for clip in serializer.data]
@@ -346,7 +347,7 @@ class VideoClipColorsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, page_id):
-        page = Page.objects.filter(user=self.request.user, date=page_id)
+        page = Page.objects.get(user=self.request.user, date=page_id)
         clips = VideoClip.objects.filter(user=self.request.user, page=page.id)
         serializer = VideoClipThumbnailSerializer(clips, many=True)
         color = [clip['clip_color'] for clip in serializer.data]
@@ -357,7 +358,7 @@ class VideoClipTypesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, page_id):
-        page = Page.objects.filter(user=self.request.user, date=page_id)
+        page = Page.objects.get(user=self.request.user, date=page_id)
         clips = VideoClip.objects.filter(user=self.request.user, page=page.id)
         serializer = VideoClipThumbnailSerializer(clips, many=True)
         type = [clip['type'] for clip in serializer.data]
