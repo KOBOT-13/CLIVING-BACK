@@ -44,7 +44,7 @@ COOLSMS_SENDER_NUMBER = get_secret("COOLSMS_SENDER_NUMBER")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['43.200.68.237']
 
 
 # Application definition
@@ -148,7 +148,7 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 )
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'https://8689-1-209-175-112.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
 CSRF_COOKIE_HTTPONLY = False
 
 ROOT_URLCONF = 'cliving.urls' #최상위 urls.py 위치
@@ -258,7 +258,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'static'
+                           )
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
