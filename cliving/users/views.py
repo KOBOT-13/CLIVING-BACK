@@ -237,6 +237,26 @@ class VerifyUserAndSendVerificationCode(APIView):
             return Response({"detail": "User not found or phone number mismatch."}, status=status.HTTP_404_NOT_FOUND)
 
 
+class ResetPasswordView(APIView):
+    def post(self, request):
+        username = request.data.get("username")
+        new_password = request.data.get("password1")
+        confirm_password = request.data.get("password2")
+
+        if new_password != confirm_password:
+            return Response({"detail": "Passwords do not match."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = CustomUser.objects.get(username=username)
+
+            user.set_password(new_password)
+            user.save()
+
+            return Response({"detail": "Password reset successfully!"}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
 class ProfileViewSet(ModelViewSet):
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
