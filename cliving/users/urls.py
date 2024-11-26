@@ -32,4 +32,8 @@ urlpatterns = [
 
     # change password
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+
+    # PasswordRest
+    path('verify-user/', VerifyUserAndSendVerificationCode.as_view(), name='verify-user'),
+    path('reset-password/', ResetPasswordView.as_view(), name='reset-password')
 ]

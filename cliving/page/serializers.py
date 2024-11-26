@@ -7,7 +7,12 @@ from .models import Page, Video, Checkpoint, Frame, Hold, FirstImage, VideoClip
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Page
-        fields = '__all__'
+        fields = ['id', 'date', 'climbing_center_name']  # user는 제외
+
+    def create(self, validated_data):
+        # 요청의 user 정보를 validated_data에 추가
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
 
 
 class VideoSerializer(serializers.ModelSerializer):
@@ -64,12 +69,13 @@ class FirstImageCRUDSerializer(serializers.ModelSerializer):
         model = FirstImage
         fields = '__all__'
 
+
 class FirstImageSerializer(serializers.ModelSerializer):
     holds = serializers.SerializerMethodField()
     
     class Meta:
         model = FirstImage
-        fields = ['image', 'holds']
+        fields = ['user', 'image', 'holds']
 
     def get_holds(self, obj):
         holds = Hold.objects.filter(first_image=obj)

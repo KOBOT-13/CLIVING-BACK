@@ -58,10 +58,10 @@ class Page(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pages')
     date_dateFieldValue = models.DateField(null=True, blank=True, verbose_name="date_dateFieldValue")
     climbing_center_name = models.CharField(max_length=20, verbose_name="center_name")
-    bouldering_clear_color = ArrayField(models.CharField(max_length=10, choices=COLOR_CHOICES),null=True, blank=True, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
-    bouldering_clear_color_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='bcc_counter') #각 색깔 카운팅
-    color_success_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='success_counter')
-    color_fail_counter = ArrayField(models.IntegerField(), null=True, blank =True, verbose_name ='fail_counter')
+    bouldering_clear_color = ArrayField(models.CharField(max_length=10, choices=COLOR_CHOICES), default=list, verbose_name='bcc') #이 페이지에 어떤 색깔들의 문제를 풀었는지.
+    bouldering_clear_color_counter = ArrayField(models.IntegerField(), default=list, verbose_name ='bcc_counter') #각 색깔 카운팅
+    color_success_counter = ArrayField(models.IntegerField(), default=list, verbose_name ='success_counter')
+    color_fail_counter = ArrayField(models.IntegerField(), default=list, verbose_name ='fail_counter')
     today_start_time = models.TimeField(blank=True, null=True, verbose_name="start")  #암장에서 첫번째 영상을 시작한 시간
     today_end_time = models.TimeField(blank=True, null=True, verbose_name="end")  #암장에서 마지막 영상을 끝낸 시간(암장에서 있던 시간을 기록)
     play_time = models.IntegerField(help_text="climbing total play time in seconds", null=True, blank=True)  #영상 촬영 시간
@@ -126,7 +126,7 @@ class FirstImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, related_name='FirstImage', on_delete=models.CASCADE)
-    IMG_date = models.CharField(max_length=12, editable=False, unique=True)
+    IMG_date = models.CharField(max_length=255, editable=False)
     image = models.ImageField(upload_to='images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     width = models.IntegerField(null=True, blank=True)
@@ -134,14 +134,15 @@ class FirstImage(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.IMG_date:
-            self.IMG_date = f'{self.user.id}_{datetime.now().strftime("%y%m%d%H%M%S")}'
-            
-        super().save(*args, **kwargs)
+            self.IMG_date = datetime.now().strftime("%y%m%d%H%M%S")
+
+        if not self.pk:  # 새로 생성된 객체인 경우에만
+            super().save(*args, **kwargs)
 
         detections, width, height = perform_object_detection(self.image.path)
-        
         self.width, self.height = width, height
-        super().save(*args, **kwargs)
+
+        super().save(update_fields=['width', 'height'])
         
         frame_instance = Frame.objects.create(image=self.image,date=self.IMG_date)
         

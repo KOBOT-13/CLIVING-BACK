@@ -19,6 +19,7 @@ class VideoAdmin(admin.ModelAdmin):
     fields = ['user', 'page_id', 'page_id_int', 'custom_id', 'videofile', 'end_time', 'start_time', 'duration','video_color']
     readonly_fields = ['custom_id']
 
+# class VideoClipAdmin(admin.ModelAdmin):
 
 # Register your models here.
 admin.site.register(Page, PageAdmin)
