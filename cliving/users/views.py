@@ -69,7 +69,7 @@ def send_verification_code_func(phone_number):
 
     # send_sms 주석 해제 시, 유료 sms 전송. 건당 20원.
     print(f"Sending SMS to {phone_number}: 인증번호는 {verification_code}입니다.")
-    # send_sms(phone_number, verification_code)
+    send_sms(phone_number, verification_code)
 
 
 class SendPhoneVerificationCodeView(APIView):
