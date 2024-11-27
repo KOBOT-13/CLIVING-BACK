@@ -152,8 +152,6 @@ def detect_pose(video, user):
             else:
                 y5, y6, x5, x6 = (start_hold[0].x1/ height, start_hold[0].x2/ height, start_hold[0].y1/ width, start_hold[0].y2/ width)
                 y7, y8, x7, x8 = (start_hold[1].x1/ height, start_hold[1].x2/ height, start_hold[1].y1/ width, start_hold[1].y2/ width)
-                xcount += 1
-                
                     
                 if not is_started:
                     if left_wrist and right_wrist and (
