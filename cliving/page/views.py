@@ -397,17 +397,7 @@ class HoldViewSet(viewsets.ModelViewSet):
         except Hold.DoesNotExist:
             return Response({'error': 'Not found'}, status=404)
         
-    def put(self, request, first_image=None, index_number=None):
-        try:
-            hold = Hold.objects.get(first_image_id=first_image, index_number=index_number)
-            hold.is_top = True
-            hold.save()
-            serializer = HoldSerializer(hold)
-            return Response(serializer.data)
-        except Hold.DoesNotExist:
-            return Response({'error': 'Hold not found'}, status=status.HTTP_404_NOT_FOUND)
-        
-    def start_hold(self, request, first_image=None, index_number=None):
+    def put_hold(self, request, first_image=None, index_number=None):
         try:
             is_top = request.data.get('is_top')
             is_start = request.data.get('is_start')
