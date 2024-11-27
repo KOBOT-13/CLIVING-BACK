@@ -393,7 +393,7 @@ class HoldViewSet(viewsets.ModelViewSet):
         try:
             hold = Hold.objects.get(first_image_id=first_image, index_number=index_number)
             serializer = HoldSerializer(hold)
-            return Response(serializer.data)
+            Response(serializer.data)
         except Hold.DoesNotExist:
             return Response({'error': 'Not found'}, status=404)
         
@@ -409,8 +409,13 @@ class HoldViewSet(viewsets.ModelViewSet):
         
     def start_hold(self, request, first_image=None, index_number=None):
         try:
+            is_top = request.data.get('is_top')
+            is_start = request.data.get('is_start')
             hold = Hold.objects.get(first_image_id=first_image, index_number=index_number)
-            hold.is_start = True
+            if is_top is not None:
+                hold.is_top = True
+            if is_start is not None:
+                hold.is_start = True
             hold.save()
             serializer = HoldSerializer(hold)
             return Response(serializer.data)
