@@ -168,7 +168,7 @@ class FirstImage(models.Model):
         if Hold.objects.filter(first_image=self, frame=frame_instance).exists():
             Hold.objects.filter(first_image=self, frame=frame_instance).update(is_bottom=False)
 
-            bottom_hold = Hold.objects.filter(first_image=self, frame=frame_instance).order_by('x2').last()
+            bottom_hold = Hold.objects.filter(first_image=self, frame=frame_instance).order_by('y2').last()
 
             if bottom_hold:
                 bottom_hold.is_bottom = True

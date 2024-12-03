@@ -23,8 +23,8 @@ def detect_pose(video, user):
 
     try:
         latest_first_image = FirstImage.objects.filter(user=user).latest("created_at")
-        width = latest_first_image.width
-        height = latest_first_image.height
+        height = latest_first_image.width
+        width = latest_first_image.height
     except FirstImage.DoesNotExist:
         return {"error": "No FirstImage found"}
 
@@ -32,26 +32,27 @@ def detect_pose(video, user):
     start_hold = list(Hold.objects.filter(first_image=latest_first_image, is_start=True))
   
     top_hold = Hold.objects.filter(first_image=latest_first_image, is_top=True).first()
+
     
-    y5, y6, x5, x6 = (start_hold[0].x1/ height, start_hold[0].x2/ height, start_hold[0].y1/ width, start_hold[0].y2/ width)
+    y5, y6, x6, x5 = (start_hold[0].y1/ height, start_hold[0].y2/ height, (width - start_hold[0].x1)/ width, (width - start_hold[0].x2)/ width)
     
     bottom_hold = Hold.objects.filter(
         first_image=latest_first_image, is_bottom=True
     ).first()
     
     top_values = {
-        "y1": top_hold.x1 / height ,
-        "y2": top_hold.x2 / height ,
-        "x1": top_hold.y1 / width ,
-        "x2": top_hold.y2 / width ,
+        "y1": top_hold.y1 / height ,
+        "y2": top_hold.y2 / height ,
+        "x1": (width - top_hold.x1) / width ,
+        "x2": (width - top_hold.x2) / width ,
     }
     
     # 그리고 비교 연산에서 문자열로 사용하지 않도록 변수로 할당
-    x1 = top_values["x1"]
-    x2 = top_values["x2"]
+    x2 = top_values["x1"]
+    x1 = top_values["x2"]
     y1 = top_values["y1"]
     y2 = top_values["y2"]
-    y_fail_point2 = bottom_hold.x2 / height
+    y_fail_point2 = bottom_hold.y2 / height
 
     if not top_hold:
         print(
@@ -124,7 +125,10 @@ def detect_pose(video, user):
 
             # start_hold가 1개일 때 2개일 때 다르게 적용
             if len(start_hold) == 1:
-                y5, y6, x5, x6 = (start_hold[0].x1/ height, start_hold[0].x2/ height, start_hold[0].y1/ width, start_hold[0].y2/ width)
+                # print(f'left_wrist : {left_wrist} right_wrist : {right_wrist}')
+                y5, y6, x6, x5 = (start_hold[0].y1/ height, start_hold[0].y2/ height, (width - start_hold[0].x1)/ width, (width - start_hold[0].x2)/ width)
+                # print(y5, y6, x5, x6)
+                # print(right_wrist, left_wrist)
                 if not is_started:
                     if left_wrist and right_wrist and (
                         ((x5 <= left_wrist.x <= x6 and y5 <= left_wrist.y <= y6) and
@@ -150,8 +154,8 @@ def detect_pose(video, user):
                         frame_count = 0
                         
             else:
-                y5, y6, x5, x6 = (start_hold[0].x1/ height, start_hold[0].x2/ height, start_hold[0].y1/ width, start_hold[0].y2/ width)
-                y7, y8, x7, x8 = (start_hold[1].x1/ height, start_hold[1].x2/ height, start_hold[1].y1/ width, start_hold[1].y2/ width)
+                y5, y6, x6, x5 = (start_hold[0].y1/ height, start_hold[0].y2/ height, (width - start_hold[0].x1)/ width, (width - start_hold[0].x2)/ width)
+                y7, y8, x8, x7 = (start_hold[1].y1/ height, start_hold[1].y2/ height, (width - start_hold[1].x1)/ width, (width - start_hold[1].x2)/ width)
                     
                 if not is_started:
                     if left_wrist and right_wrist and (
@@ -211,23 +215,23 @@ def detect_pose(video, user):
                     right_foot_y is not None and y_fail_point2 <= right_foot_y
                 ):
                     timestamp = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
-                    if not timestamp - start_checkpoints[-1] <= 5:
-                        if is_success:
-                            success_checkpoint = timestamp
-                            success_checkpoints.append(success_checkpoint)
-                            is_success = False
-                            is_started = False
-                            skip_frames = 30
-                            continue
-
+                    # if not timestamp - start_checkpoints[-1] <= 5:
+                    if is_success:
+                        success_checkpoint = timestamp
+                        success_checkpoints.append(success_checkpoint)
+                        is_success = False
                         is_started = False
-                        failure_checkpoint = timestamp
-                        failure_checkpoints.append(failure_checkpoint)
-                        skip_frames = 60  # 60프레임 건너뛰기
+                        skip_frames = 30
                         continue
+
+                    is_started = False
+                    failure_checkpoint = timestamp
+                    failure_checkpoints.append(failure_checkpoint)
+                    skip_frames = 60  # 60프레임 건너뛰기
+                    continue
                     
-                    else:
-                        start_checkpoints.pop()
+                    # else:
+                        # start_checkpoints.pop()
     cap.release()
     video_duration = video.duration
     # 시작점 체크포인트 저장
